@@ -52,3 +52,27 @@
                      :b [2 []]}
                     [:a])
          [:a :b])))
+(deftest nullability
+  (is (= (nullables {:zero-or-more [[:x :zero-or-more]
+                                    []]})
+         [:zero-or-more]))
+  (is (= (nullables {:one-or-more [[:x :zero-or-more]]
+                     :zero-or-more [[:x :zero-or-more]
+                                    []]})
+         [:zero-or-more]))
+  (is (= (set (nullables {:a [[:b :c]]
+                          :b [[:z]
+                              []]
+                          :c [[:z]
+                              []]}))
+         #{:a :b :c}))
+  (is (= (nullables {:a [[:b :c]]
+                     :b [[:z]
+                         []]
+                     :c [[:z]]})
+         [:b]))
+  (is (= (nullables {:a [[:b :c]]
+                     :b [[:z]]
+                     :c [[:z]
+                         []]})
+         [:c])))

@@ -39,3 +39,32 @@
   edges from reachable nodes."
   [tgraph nodes]
   (reachable-queue tgraph (into clojure.lang.PersistentQueue/EMPTY nodes)))
+
+;; LL(1) parsing
+
+(defn- nullable-tgraph [productions]
+  (merge-with
+    (fn [[threshold edges] [_ new-edges]]
+      [threshold (into edges new-edges)])
+    (zipmap (for [k (keys productions)] [:lhs k])
+            (repeat [1 []]))
+    (into {} (for [[k rhses] (seq productions)
+                   [i rhs] (map list (iterate inc 0) (seq rhses))]
+               [[:rhs k i] [(count rhs) [[:lhs k]]]]))
+    (into {} (for [[k rhses] (seq productions)
+                   [i rhs] (map list (iterate inc 0) (seq rhses))
+                   x (seq rhs)
+                   :when (contains? productions x)]
+               [[:lhs x] [nil [[:rhs k i]]]]))))
+(defn nullables
+  "The nullable nonterminal symbols of the given grammar, which is
+  a map nonterminal -> list of expansions, where an expansion is a
+  (possibly empty) list of nonterminals and terminals."
+  [productions]
+  (let [tgraph (nullable-tgraph productions)]
+    (->> (reachable tgraph
+                    (for [[k [threshold _]] (seq tgraph)
+                          :when (= 0 threshold)]
+                      k))
+         (filter #(= :lhs (first %)))
+         (map second))))
