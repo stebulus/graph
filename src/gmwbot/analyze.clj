@@ -70,25 +70,6 @@
          (filter #(= :lhs (first %)))
          (map second))))
 
-(defn- first-duplicate [xs]
-  (->> (map list xs (drop 1 xs))
-       (filter #(apply = %))
-       first
-       first))
-(defn- stabilize [f init]
-  (first-duplicate (iterate f init)))
-(defn remove-sources [graph]
-  (stabilize #(select-keys % (apply concat (vals %))) graph))
-(defn remove-sinks [graph]
-  (stabilize (fn [graph]
-                 (->> (seq graph)
-                      (map (fn [[start ends]] [start (filter graph ends)]))
-                      (filter (fn [[start ends]] (seq ends)))
-                      (into {})))
-             graph))
-(defn cyclic-part [graph]
-  (remove-sinks (remove-sources graph)))
-
 (def ^:private recursion-poison (gensym 'recursion_poison_))
 (defn recurser
   "Returns a function for traversing a labelled directed acyclic graph,

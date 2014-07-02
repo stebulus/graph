@@ -76,20 +76,6 @@
                      :c [[:z]
                          []]})
          [:c])))
-(deftest cycles
-  (is (= (cyclic-part {:a [:b]
-                       :b [:c]
-                       :c []})
-         {}))
-  (is (= (cyclic-part {:z [:a :e]
-                       :a [:b]
-                       :b [:c :d]
-                       :c [:a]
-                       :d [:e]
-                       :e []})
-         {:a [:b]
-          :b [:c]
-          :c [:a]})))
 (deftest recursive-traversal
   (let [lgraph {:a [3 [:b :c]]
                 :b [1 [:c :d]]
