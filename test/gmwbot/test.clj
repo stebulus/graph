@@ -103,7 +103,23 @@
                  (f {} :a)))
     (is (thrown-with-msg? IllegalArgumentException #"recursion :b"
                  (f {} :b)))
-    (is (= (f {} :c) {:c 1}))))
+    (is (= (f {} :c) {:c 1})))
+  (let [graph {:a [+ [:b :c]]
+               :b [* [:d :f]]
+               :c [* [:d :e]]
+               :d [(constantly 3) []]
+               :e [(constantly 4) []]
+               :f [(constantly 2) []]}
+        f (recurser #(first (graph %))
+                    #(second (graph %))
+                    (fn [f & args] (apply f args)))]
+    (is (= (f {} :a)
+           {:a 18
+            :b 6
+            :c 12
+            :d 3
+            :e 4
+            :f 2}))))
 (deftest firsts
   (let [grammar {:a [[:b :c]
                      []]
