@@ -1,4 +1,5 @@
-(ns gmwbot.analyze)
+(ns gmwbot.analyze
+  (:use clojure.set))
 
 ;; Directed graphs with thresholds
 
@@ -68,3 +69,72 @@
                       k))
          (filter #(= :lhs (first %)))
          (map second))))
+
+(defn- first-duplicate [xs]
+  (->> (map list xs (drop 1 xs))
+       (filter #(apply = %))
+       first
+       first))
+(defn- stabilize [f init]
+  (first-duplicate (iterate f init)))
+(defn remove-sources [graph]
+  (stabilize #(select-keys % (apply concat (vals %))) graph))
+(defn remove-sinks [graph]
+  (stabilize (fn [graph]
+                 (->> (seq graph)
+                      (map (fn [[start ends]] [start (filter graph ends)]))
+                      (filter (fn [[start ends]] (seq ends)))
+                      (into {})))
+             graph))
+(defn cyclic-part [graph]
+  (remove-sinks (remove-sources graph)))
+
+(def ^:private recursion-poison (gensym 'recursion_poison_))
+(defn recurser
+  "Returns a function for traversing a labelled directed acyclic graph,
+  computing a value for each node based on its label and the values of
+  its children.  The returned function f is invoked as (f memo node),
+  where node is a node in the graph and memo is a map node -> value,
+  and this call returns memo with entries added (at least an entry for
+  node, and possibly more).  The children of a node are determined
+  by calling (children node).  The label of a node is determined by
+  calling (label node).  The value computed for a node is (combine
+  label val ...), where label is the label of the node and val ... are
+  the values computed for its children.  The returned function throws
+  IllegalArgumentException if it encounters a cycle in the graph."
+  [label children combine]
+  (fn f [memo node]
+    (let [val (memo node)]
+      (cond (= val recursion-poison)
+              (throw (IllegalArgumentException. (str "recursion " node)))
+            (not (nil? val))
+              memo
+            true
+              (let [chile (seq (children node))
+                    memo-with-chile (reduce f (assoc memo node recursion-poison) chile)]
+                (assoc memo-with-chile node
+                       (apply combine (label node) (map memo-with-chile chile))))))))
+
+
+(defn- take-until [pred xs]
+  (lazy-seq
+    (when (seq xs)
+      (let [x (first xs)]
+        (if (pred x)
+          [x]
+          (cons x (take-until pred (rest xs))))))))
+(defn first-sets [productions nullable?]
+  (let [f (recurser (fn [x] (let [lhs (first x)]
+                              (if (and (nil? (second x))
+                                       (not (contains? productions lhs)))
+                                #{lhs}
+                                #{})))
+                    (fn [x] (let [lhs (first x)]
+                              (if-let [n (second x)]
+                                (map list
+                                     (take-until #(not (nullable? %))
+                                                 (get (productions lhs) n)))
+                                (for [n (range (count (productions lhs)))]
+                                    [lhs n]))))
+                    union)]
+    (reduce f {} (map list (keys productions)))))

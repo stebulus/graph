@@ -76,3 +76,76 @@
                      :c [[:z]
                          []]})
          [:c])))
+(deftest cycles
+  (is (= (cyclic-part {:a [:b]
+                       :b [:c]
+                       :c []})
+         {}))
+  (is (= (cyclic-part {:z [:a :e]
+                       :a [:b]
+                       :b [:c :d]
+                       :c [:a]
+                       :d [:e]
+                       :e []})
+         {:a [:b]
+          :b [:c]
+          :c [:a]})))
+(deftest recursive-traversal
+  (let [lgraph {:a [3 [:b :c]]
+                :b [1 [:c :d]]
+                :c [2 []]
+                :d [4 []]}]
+    (let [f (recurser #(first (lgraph %))
+                      #(second (lgraph %))
+                      +)]
+      (is (= (f {} :c) {:c 2}))
+      (is (= (f {} :d) {:d 4}))
+      (is (= (f {} :b) {:b 7 :c 2 :d 4}))
+      (is (= (f {} :a) {:a 12 :b 7 :c 2 :d 4})))  ; note :c 2 counted twice
+    (let [f (recurser #(list (first (lgraph %)))
+                      #(second (lgraph %))
+                      concat)]
+      (is (= (f {} :c) {:c [2]}))
+      (is (= (f {} :d) {:d [4]}))
+      (is (= (f {} :b) {:b [1 2 4] :c [2] :d [4]}))
+      (is (= (f {} :a) {:a [3 1 2 4 2] :b [1 2 4] :c [2] :d [4]}))))
+  (let [graph {:a [:b :c]
+               :b [:a :c]
+               :c []}
+        f (recurser (fn [_] 1) graph +)]
+    (is (thrown-with-msg? IllegalArgumentException #"recursion :a"
+                 (f {} :a)))
+    (is (thrown-with-msg? IllegalArgumentException #"recursion :b"
+                 (f {} :b)))
+    (is (= (f {} :c) {:c 1}))))
+(deftest firsts
+  (let [grammar {:a [[:b :c]
+                     []]
+                 :b [["terminal"]
+                     []]
+                 :c [[:a]
+                     []]}]
+    (is (thrown? IllegalArgumentException
+                 (first-sets grammar (set (nullables grammar))))))
+  (let [grammar {:s [[:f]
+                     ["(" :s "+" :f ")"]
+                     []]
+                 :f [["a"]]
+                 :g [["b"]
+                     []]}
+        nullable? (set (nullables grammar))
+        first-set (first-sets grammar nullable?)]
+    (is (= (first-sets grammar nullable?)
+           {[:s] #{"a" "("}
+            [:s 0] #{"a"}
+            [:s 1] #{"("}
+            [:s 2] #{}
+            [:f] #{"a"}
+            [:f 0] #{"a"}
+            [:g] #{"b"}
+            [:g 0] #{"b"}
+            [:g 1] #{}
+            ["a"] #{"a"}
+            ["b"] #{"b"}
+            ["("] #{"("}
+            }))))
