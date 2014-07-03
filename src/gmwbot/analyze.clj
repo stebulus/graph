@@ -86,17 +86,14 @@
           [x]
           (cons x (take-until pred (rest xs))))))))
 (defn first-sets [productions nullable?]
-  (let [f (recurser (fn [x] (let [lhs (first x)]
-                              (if (and (nil? (second x))
-                                       (not (contains? productions lhs)))
-                                #{lhs}
-                                #{})))
-                    (fn [x] (let [lhs (first x)]
-                              (if-let [n (second x)]
-                                (map list
-                                     (take-until #(not (nullable? %))
-                                                 (get (productions lhs) n)))
-                                (for [n (range (count (productions lhs)))]
-                                    [lhs n]))))
-                    union)]
-    (reduce f {} (map list (keys productions)))))
+  (let [f (recurser (fn [[tag x]]
+                      (if (and (= tag :single)
+                               (nil? (productions x)))
+                        #{x}
+                        #{}))
+                    (fn [[tag x]]
+                        (if (= tag :single)
+                          (map #(list :list %) (productions x))
+                          (map #(list :single %) (take-until #(not (nullable? %)) x))))
+                    (combiner union))]
+    (reduce f {} (map #(list :single %) (keys productions)))))

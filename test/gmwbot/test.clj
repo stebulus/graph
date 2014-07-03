@@ -101,16 +101,14 @@
         nullable? (set (nullables grammar))
         first-set (first-sets grammar nullable?)]
     (is (= (first-sets grammar nullable?)
-           {[:s] #{"a" "("}
-            [:s 0] #{"a"}
-            [:s 1] #{"("}
-            [:s 2] #{}
-            [:f] #{"a"}
-            [:f 0] #{"a"}
-            [:g] #{"b"}
-            [:g 0] #{"b"}
-            [:g 1] #{}
-            ["a"] #{"a"}
-            ["b"] #{"b"}
-            ["("] #{"("}
-            }))))
+           {[:single :s] #{"a" "("}
+            [:list [:f]] #{"a"}
+            [:list ["(" :s "+" :f ")"]] #{"("}
+            [:single "("] #{"("}
+            [:list []] #{}
+            [:single :f] #{"a"}
+            [:list ["a"]] #{"a"}
+            [:single "a"] #{"a"}
+            [:single :g] #{"b"}
+            [:list ["b"]] #{"b"}
+            [:single "b"] #{"b"}}))))
