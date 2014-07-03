@@ -110,12 +110,26 @@
   a map nonterminal -> list of expansions, where an expansion is a
   (possibly empty) list of nonterminals and terminals."
   [productions]
-  (let [tgraph (nullable-tgraph productions)]
-    (->> (reachable tgraph
-                    (for [[k [threshold _]] (seq tgraph)
-                          :when (= 0 threshold)]
-                      k))
-         (filter #(= :lhs (first %)))
+  ;; We use recurser with a virtual graph where the symbols
+  ;; (terminal and nonterminal) of the grammar appear as nodes
+  ;; [:single symbol] and the right-hand sides of productions
+  ;; appear as nodes [:list symbols].  The children of a symbol
+  ;; node are the nodes representing its right-hand sides; the
+  ;; children of a right-hand-side node are the nodes representing
+  ;; the symbols in the expansion.  Nullability is then a matter of
+  ;; evaluation: a symbol is nullable if any of its children are,
+  ;; and a right-hand side is nullable if all of its children are.
+  ;; (Nonterminal symbols have no children, so they are not nullable;
+  ;; empty right-hand sides have no children, so they *are* nullable.)
+  (let [f (recurser (fn [[tag _]] (if (= tag :single) any all))
+                    (fn [[tag x]] (if (= tag :single)
+                                    (map #(list :list %) (productions x))
+                                    (map #(list :single %) x)))
+                    (fn [f & args] (apply f args)))]
+    (->> (reduce f {} (map #(list :single %) (keys productions)))
+         seq
+         (filter (fn [[[tag x] v]] (and v (= tag :single))))
+         (map first)
          (map second))))
 
 (defn- take-until [pred xs]
