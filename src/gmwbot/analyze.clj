@@ -46,15 +46,20 @@
 (def ^:private recursion-poison (gensym 'recursion_poison_))
 (defn recurser
   "Returns a function for traversing a labelled directed acyclic graph,
-  computing a value for each node based on its label and the values of
-  its children.  The returned function f is invoked as (f memo node),
-  where node is a node in the graph and memo is a map node -> value,
-  and this call returns memo with entries added (at least an entry for
-  node, and possibly more).  The children of a node are determined
-  by calling (children node).  The label of a node is determined by
-  calling (label node).  The value computed for a node is (combine
-  label val ...), where label is the label of the node and val ... are
-  the values computed for its children.  The returned function throws
+  computing a value for each node based on its label and the values
+  of its children.  The returned function f is invoked as (f memo
+  node), where node is a node in the graph and memo is a map node ->
+  value, and this call returns memo with entries added (at least
+  an entry for node, and possibly more).  The children of a node
+  are determined by calling (children node).  The label of a node is
+  determined by calling (label node).  The value of a node is computed
+  by logic somewhat like that of reduce: first, the initial value is
+  (combine (label node)); then, for each child of node, the value
+  of the child is computed recursively, and the value of the current
+  node is updated to (combine (label node) prev-value child-value).
+  The function combine may short-circuit by returning (reduced x);
+  then the values of any further children of the current node will not
+  be computed (unless needed elsewhere).  The returned function throws
   IllegalArgumentException if it encounters a cycle in the graph."
   [label children combine]
   (fn f [memo node]
@@ -64,10 +69,27 @@
             (not (nil? val))
               memo
             true
-              (let [chile (seq (children node))
-                    memo-with-chile (reduce f (assoc memo node recursion-poison) chile)]
-                (assoc memo-with-chile node
-                       (apply combine (label node) (map memo-with-chile chile))))))))
+              (let [lab (label node)]
+                (loop [memo (assoc memo node recursion-poison)
+                       chile (seq (children node))
+                       val (combine lab)]
+                  (if (nil? chile)
+                    (assoc memo node val)
+                    (let [child (first chile)
+                          new-memo (f memo child)
+                          new-val (combine lab val (new-memo child))]
+                      (if (reduced? new-val)
+                        (assoc new-memo node @new-val)
+                        (recur new-memo (next chile) new-val))))))))))
+(defn combiner [f]
+  (fn ([label] label)
+      ([label x y] (f x y))))
+(defn all
+  ([] true)
+  ([x y] (if (and x y) true (reduced false))))
+(defn any
+  ([] false)
+  ([x y] (if (or x y) (reduced true) false)))
 
 (defn- nullable-tgraph [productions]
   (merge-with

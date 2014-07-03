@@ -83,14 +83,14 @@
                 :d [4 []]}]
     (let [f (recurser #(first (lgraph %))
                       #(second (lgraph %))
-                      +)]
+                      (combiner +))]
       (is (= (f {} :c) {:c 2}))
       (is (= (f {} :d) {:d 4}))
       (is (= (f {} :b) {:b 7 :c 2 :d 4}))
       (is (= (f {} :a) {:a 12 :b 7 :c 2 :d 4})))  ; note :c 2 counted twice
     (let [f (recurser #(list (first (lgraph %)))
                       #(second (lgraph %))
-                      concat)]
+                      (combiner concat))]
       (is (= (f {} :c) {:c [2]}))
       (is (= (f {} :d) {:d [4]}))
       (is (= (f {} :b) {:b [1 2 4] :c [2] :d [4]}))
@@ -98,12 +98,27 @@
   (let [graph {:a [:b :c]
                :b [:a :c]
                :c []}
-        f (recurser (fn [_] 1) graph +)]
+        f (recurser (fn [_] 1) graph (combiner +))]
     (is (thrown-with-msg? IllegalArgumentException #"recursion :a"
                  (f {} :a)))
     (is (thrown-with-msg? IllegalArgumentException #"recursion :b"
                  (f {} :b)))
     (is (= (f {} :c) {:c 1})))
+  (let [graph {:a [all [:b :c]]
+               :b [(constantly true) []]
+               :c [all [:a]]}
+        f (recurser #(first (graph %))
+                    #(second (graph %))
+                    (fn [f & args] (apply f args)))]
+    (is (thrown-with-msg? IllegalArgumentException #"recursion :a"
+          (f {} :a))))
+  (let [graph {:a [all [:b :c]]
+               :b [(constantly false) []]
+               :c [all [:a]]}
+        f (recurser #(first (graph %))
+                    #(second (graph %))
+                    (fn [f & args] (apply f args)))]
+    (is (= (f {} :a) {:a false :b false})))
   (let [graph {:a [+ [:b :c]]
                :b [* [:d :f]]
                :c [* [:d :e]]
