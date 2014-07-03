@@ -43,33 +43,6 @@
 
 ;; LL(1) parsing
 
-(defn- nullable-tgraph [productions]
-  (merge-with
-    (fn [[threshold edges] [_ new-edges]]
-      [threshold (into edges new-edges)])
-    (zipmap (for [k (keys productions)] [:lhs k])
-            (repeat [1 []]))
-    (into {} (for [[k rhses] (seq productions)
-                   [i rhs] (map list (iterate inc 0) (seq rhses))]
-               [[:rhs k i] [(count rhs) [[:lhs k]]]]))
-    (into {} (for [[k rhses] (seq productions)
-                   [i rhs] (map list (iterate inc 0) (seq rhses))
-                   x (seq rhs)
-                   :when (contains? productions x)]
-               [[:lhs x] [nil [[:rhs k i]]]]))))
-(defn nullables
-  "The nullable nonterminal symbols of the given grammar, which is
-  a map nonterminal -> list of expansions, where an expansion is a
-  (possibly empty) list of nonterminals and terminals."
-  [productions]
-  (let [tgraph (nullable-tgraph productions)]
-    (->> (reachable tgraph
-                    (for [[k [threshold _]] (seq tgraph)
-                          :when (= 0 threshold)]
-                      k))
-         (filter #(= :lhs (first %)))
-         (map second))))
-
 (def ^:private recursion-poison (gensym 'recursion_poison_))
 (defn recurser
   "Returns a function for traversing a labelled directed acyclic graph,
@@ -96,6 +69,32 @@
                 (assoc memo-with-chile node
                        (apply combine (label node) (map memo-with-chile chile))))))))
 
+(defn- nullable-tgraph [productions]
+  (merge-with
+    (fn [[threshold edges] [_ new-edges]]
+      [threshold (into edges new-edges)])
+    (zipmap (for [k (keys productions)] [:lhs k])
+            (repeat [1 []]))
+    (into {} (for [[k rhses] (seq productions)
+                   [i rhs] (map list (iterate inc 0) (seq rhses))]
+               [[:rhs k i] [(count rhs) [[:lhs k]]]]))
+    (into {} (for [[k rhses] (seq productions)
+                   [i rhs] (map list (iterate inc 0) (seq rhses))
+                   x (seq rhs)
+                   :when (contains? productions x)]
+               [[:lhs x] [nil [[:rhs k i]]]]))))
+(defn nullables
+  "The nullable nonterminal symbols of the given grammar, which is
+  a map nonterminal -> list of expansions, where an expansion is a
+  (possibly empty) list of nonterminals and terminals."
+  [productions]
+  (let [tgraph (nullable-tgraph productions)]
+    (->> (reachable tgraph
+                    (for [[k [threshold _]] (seq tgraph)
+                          :when (= 0 threshold)]
+                      k))
+         (filter #(= :lhs (first %)))
+         (map second))))
 
 (defn- take-until [pred xs]
   (lazy-seq
