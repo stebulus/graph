@@ -39,3 +39,11 @@
       (if (success? s)
         (recur s pred)
         s))))
+(defn scan-children [search pred]
+  (let [s (down search)]
+    (if (success? s)
+      (let [s (scan-across s pred)]
+        (if (success? s)
+          s
+          (fail (up s))))
+      s)))

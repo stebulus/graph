@@ -86,3 +86,14 @@
     true [:a :d]
     (df/scan-across #(= :f %))
     false [:a :e]))
+(deftest scan-children
+  (test-traverse
+    (df/dfs {:a [:b :c :d]} :a)
+    true [nil :a]
+    (df/scan-children #(= :c %))
+    true [:a :c])
+  (test-traverse
+    (df/dfs {:a [:b :c :d]} :a)
+    true [nil :a]
+    (df/scan-children #(= :z %))
+    false [nil :a]))
