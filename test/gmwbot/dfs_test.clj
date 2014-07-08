@@ -3,19 +3,19 @@
         gmwbot.dfs))
 (defn- test-traverse-clause
   "Helper function for macro test-traverse."
-  ([search-sym failed edge]
+  ([search-sym success edge]
     `(do
-       (is (= ~failed (failed? ~search-sym)))
+       (is (= ~success (success? ~search-sym)))
        (is (= ~edge (last-edge ~search-sym)))))
-  ([search-sym failed edge form]
-    (concat (test-traverse-clause search-sym failed edge)
+  ([search-sym success edge form]
+    (concat (test-traverse-clause search-sym success edge)
             `((~(first form) ~search-sym ~@(rest form))))))
 (defmacro test-traverse [dfs & forms]
   "Test a sequence of maneuvers in a depth-first search.  The first
   argument is an expression evaluating to an implementation
   of gmwbot.dfs/DepthFirstSearch.  The remaining forms describe a
   sequence of tests, in threes: in each triple of forms, the first
-  form is the value that should be returned by (failed? dfs), the
+  form is the value that should be returned by (success? dfs), the
   second is the value that should be returned by (last-edge dfs),
   and the third is a form into which dfs should be threaded as the
   first argument; the value of the resulting form will be used as
@@ -37,36 +37,36 @@
 (deftest dfs-down
   (test-traverse
     (dfs {:a [:b] :b [:c]} :a)
-    false [nil :a]
+    true [nil :a]
     (down)
-    false [:a :b]
+    true [:a :b]
     (down)
-    false [:b :c]
+    true [:b :c]
     (down)
-    true [:b :c]))
+    false [:b :c]))
 (deftest dfs-across
   (test-traverse
     (dfs {:a [:b :c :d]} :a)
-    false [nil :a]
+    true [nil :a]
     (down)
-    false [:a :b]
+    true [:a :b]
     (across)
-    false [:a :c]
+    true [:a :c]
     (across)
-    false [:a :d]
+    true [:a :d]
     (across)
-    true [:a :d]))
+    false [:a :d]))
 (deftest dfs-up
   (test-traverse
     (dfs {:a [:b] :b [:c]} :a)
-    false [nil :a]
+    true [nil :a]
     (down)
-    false [:a :b]
+    true [:a :b]
     (down)
-    false [:b :c]
+    true [:b :c]
     (up)
-    false [:a :b]
+    true [:a :b]
     (up)
-    false [nil :a]
+    true [nil :a]
     (up)
-    true [nil :a]))
+    false [nil :a]))
