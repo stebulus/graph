@@ -196,3 +196,18 @@
       true [:a :c]
       (df/down)
       false [:a :c])))
+
+(deftest step
+  (test-traverse
+    (df/dfs {:a [:b :c] :b [:x :y]} :a)
+    true [nil :a]
+    (df/step)
+    true [:a :b]
+    (df/step)
+    true [:b :x]
+    (df/step)
+    true [:b :y]
+    (df/step)
+    true [:a :c]
+    (df/step)
+    false [nil :a]))

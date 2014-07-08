@@ -70,3 +70,16 @@
     (last-edge search)))
 (defn prune-seen [search]
   (PrunedDFS. true search #{(second (last-edge search))}))
+
+(defn step [search]
+  (let [s (down search)]
+    (if (success? s)
+      s
+      (loop [s s]
+        (let [s (across s)]
+          (if (success? s)
+            s
+            (let [s (up s)]
+              (if (success? s)
+                (recur s)
+                s))))))))
