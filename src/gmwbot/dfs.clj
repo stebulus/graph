@@ -3,6 +3,7 @@
   (down [this])
   (across [this])
   (up [this])
+  (fail [this])
   (success? [this])
   (last-edge [this]))
 (defrecord StackDFS [success stack children]
@@ -22,6 +23,8 @@
       (if (empty? s)
         (StackDFS. false stack children)
         (StackDFS. true s children))))
+  (fail [this]
+    (StackDFS. false stack children))
   (success? [this]
     (. this success))
   (last-edge [this]
