@@ -97,3 +97,102 @@
     true [nil :a]
     (df/scan-children #(= :z %))
     false [nil :a]))
+
+(deftest dfs-prune-seen-2loop
+  (let [search (df/dfs {:a [:b] :b [:a]} :a)]
+    (test-traverse
+      search
+      true [nil :a]
+      (df/down)
+      true [:a :b]
+      (df/down)
+      true [:b :a]
+      (df/down)
+      true [:a :b])
+    (test-traverse
+      (df/prune-seen search)
+      true [nil :a]
+      (df/down)
+      true [:a :b]
+      (df/down)
+      false [:a :b])))
+(deftest dfs-prune-seen-1loop
+  (let [search (df/dfs {:a [:a]} :a)]
+    (test-traverse
+      search
+      true [nil :a]
+      (df/down)
+      true [:a :a]
+      (df/down)
+      true [:a :a])
+    (test-traverse
+      (df/prune-seen search)
+      true [nil :a]
+      (df/down)
+      false [nil :a])))
+(deftest dfs-prune-seen-sibling
+  (let [search (df/dfs {:a [:b :c :b] :b []} :a)]
+    (test-traverse
+      search
+      true [nil :a]
+      (df/down)
+      true [:a :b]
+      (df/across)
+      true [:a :c]
+      (df/across)
+      true [:a :b]
+      (df/across)
+      false [:a :b])
+    (test-traverse
+      (df/prune-seen search)
+      true [nil :a]
+      (df/down)
+      true [:a :b]
+      (df/across)
+      true [:a :c]
+      (df/across)
+      false [:a :c])))
+(deftest dfs-prune-seen-niece
+  (let [search (df/dfs {:a [:b :c] :b [:c]} :a)]
+    (test-traverse
+      search
+      true [nil :a]
+      (df/down)
+      true [:a :b]
+      (df/down)
+      true [:b :c]
+      (df/up)
+      true [:a :b]
+      (df/across)
+      true [:a :c])
+    (test-traverse
+      (df/prune-seen search)
+      true [nil :a]
+      (df/down)
+      true [:a :b]
+      (df/down)
+      true [:b :c]
+      (df/up)
+      true [:a :b]
+      (df/across)
+      false [:a :b])))
+(deftest dfs-prune-seen-aunt
+  (let [search (df/dfs {:a [:b :c] :b [] :c [:b]} :a)]
+    (test-traverse
+      search
+      true [nil :a]
+      (df/down)
+      true [:a :b]
+      (df/across)
+      true [:a :c]
+      (df/down)
+      true [:c :b])
+    (test-traverse
+      (df/prune-seen search)
+      true [nil :a]
+      (df/down)
+      true [:a :b]
+      (df/across)
+      true [:a :c]
+      (df/down)
+      false [:a :c])))

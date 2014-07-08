@@ -47,3 +47,26 @@
           s
           (fail (up s))))
       s)))
+(defrecord PrunedDFS [success search seen]
+  DepthFirstSearch
+  (down [this]
+    (let [s (scan-children search #(not (contains? seen %)))]
+      (if (success? s)
+        (PrunedDFS. true s (conj seen (second (last-edge s))))
+        (PrunedDFS. false s seen))))
+  (across [this]
+    (let [s (scan-across search #(not (contains? seen %)))]
+      (if (success? s)
+        (PrunedDFS. true s (conj seen (second (last-edge s))))
+        (PrunedDFS. false search seen))))
+  (up [this]
+    (let [s (up search)]
+      (PrunedDFS. (success? s) s seen)))
+  (fail [this]
+    (PrunedDFS. false search seen))
+  (success? [this]
+    success)
+  (last-edge [this]
+    (last-edge search)))
+(defn prune-seen [search]
+  (PrunedDFS. true search #{(second (last-edge search))}))
