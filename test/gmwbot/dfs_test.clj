@@ -211,3 +211,13 @@
     true [:a :c]
     (df/step)
     false [nil :a]))
+
+(deftest preorder
+  (is (= (df/preorder (df/dfs {:a [:b :c] :b [:x :y]} :a))
+         [:a :b :x :y :c])))
+(deftest preorder-pruned
+  (is (= (df/preorder (df/dfs {:a [:b :c] :b [:x :a :y] :c [:x]} :a))
+         [:a :b :x :y :c])))
+(deftest preorder-tree
+  (is (= (df/preorder-tree (df/dfs {:a [:b :c] :b [:x :y] :c [:x]} :a))
+         [:a :b :x :y :c :x])))
