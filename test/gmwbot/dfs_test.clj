@@ -36,6 +36,7 @@
            ~search-sym
            ~@(map #(apply test-traverse-clause search-sym %)
                   (partition-all 3 forms)))))
+
 (deftest down
   (test-traverse
     (df/dfs {:a [:b] :b [:c]} :a)
@@ -72,3 +73,16 @@
     true [nil :a]
     (df/up)
     false [nil :a]))
+
+(deftest scan-across
+  (test-traverse
+    (df/dfs {:a [:b :c :d :e]} :a)
+    true [nil :a]
+    (df/down)
+    true [:a :b]
+    (df/scan-across #(= :b %))
+    true [:a :b]
+    (df/scan-across #(= :d %))
+    true [:a :d]
+    (df/scan-across #(= :f %))
+    false [:a :e]))

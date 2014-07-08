@@ -32,3 +32,10 @@
      (first (peek stack))]))
 (defn dfs [graph start]
   (StackDFS. true [[start]] graph))
+(defn scan-across [search pred]
+  (if (pred (second (last-edge search)))
+    search
+    (let [s (across search)]
+      (if (success? s)
+        (recur s pred)
+        s))))
