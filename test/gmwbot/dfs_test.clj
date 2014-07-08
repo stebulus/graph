@@ -1,12 +1,13 @@
 (ns gmwbot.dfs-test
-  (:use clojure.test
-        gmwbot.dfs))
+  (:use clojure.test)
+  (:require [gmwbot.dfs :as df]))
+
 (defn- test-traverse-clause
   "Helper function for macro test-traverse."
   ([search-sym success edge]
     `(do
-       (is (= ~success (success? ~search-sym)))
-       (is (= ~edge (last-edge ~search-sym)))))
+       (is (= ~success (df/success? ~search-sym)))
+       (is (= ~edge (df/last-edge ~search-sym)))))
   ([search-sym success edge form]
     (concat (test-traverse-clause search-sym success edge)
             `((~(first form) ~search-sym ~@(rest form))))))
@@ -20,10 +21,11 @@
   and the third is a form into which dfs should be threaded as the
   first argument; the value of the resulting form will be used as
   the dfs for the next forms.  For example,
+    (require '[gmwbot.dfs :as df])
     (test-traverse
-      (dfs {:a []} :a)
+      (df/dfs {:a []} :a)
       false [nil :a]
-      (down)
+      (df/down)
       true [nil :a])
   verifies the initial state, tries to move down, and verifies the
   resulting state.  The number of forms should be a multiple of 3,
@@ -34,39 +36,39 @@
            ~search-sym
            ~@(map #(apply test-traverse-clause search-sym %)
                   (partition-all 3 forms)))))
-(deftest dfs-down
+(deftest down
   (test-traverse
-    (dfs {:a [:b] :b [:c]} :a)
+    (df/dfs {:a [:b] :b [:c]} :a)
     true [nil :a]
-    (down)
+    (df/down)
     true [:a :b]
-    (down)
+    (df/down)
     true [:b :c]
-    (down)
+    (df/down)
     false [:b :c]))
-(deftest dfs-across
+(deftest across
   (test-traverse
-    (dfs {:a [:b :c :d]} :a)
+    (df/dfs {:a [:b :c :d]} :a)
     true [nil :a]
-    (down)
+    (df/down)
     true [:a :b]
-    (across)
+    (df/across)
     true [:a :c]
-    (across)
+    (df/across)
     true [:a :d]
-    (across)
+    (df/across)
     false [:a :d]))
-(deftest dfs-up
+(deftest up
   (test-traverse
-    (dfs {:a [:b] :b [:c]} :a)
+    (df/dfs {:a [:b] :b [:c]} :a)
     true [nil :a]
-    (down)
+    (df/down)
     true [:a :b]
-    (down)
+    (df/down)
     true [:b :c]
-    (up)
+    (df/up)
     true [:a :b]
-    (up)
+    (df/up)
     true [nil :a]
-    (up)
+    (df/up)
     false [nil :a]))
