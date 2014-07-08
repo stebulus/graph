@@ -7,9 +7,9 @@
     `(do
        (is (= ~failed (failed? ~search-sym)))
        (is (= ~edge (last-edge ~search-sym)))))
-  ([search-sym failed edge func]
+  ([search-sym failed edge form]
     (concat (test-traverse-clause search-sym failed edge)
-            (list (list func search-sym)))))
+            `((~(first form) ~search-sym ~@(rest form))))))
 (defmacro test-traverse [dfs & forms]
   "Test a sequence of maneuvers in a depth-first search.  The first
   argument is an expression evaluating to an implementation
@@ -17,12 +17,13 @@
   sequence of tests, in threes: in each triple of forms, the first
   form is the value that should be returned by (failed? dfs), the
   second is the value that should be returned by (last-edge dfs),
-  and the third is a function f; the value of (f dfs) will be used
-  as the dfs for the next forms.  For example,
+  and the third is a form into which dfs should be threaded as the
+  first argument; the value of the resulting form will be used as
+  the dfs for the next forms.  For example,
     (test-traverse
       (dfs {:a []} :a)
       false [nil :a]
-      down
+      (down)
       true [nil :a])
   verifies the initial state, tries to move down, and verifies the
   resulting state.  The number of forms should be a multiple of 3,
@@ -37,35 +38,35 @@
   (test-traverse
     (dfs {:a [:b] :b [:c]} :a)
     false [nil :a]
-    down
+    (down)
     false [:a :b]
-    down
+    (down)
     false [:b :c]
-    down
+    (down)
     true [:b :c]))
 (deftest dfs-across
   (test-traverse
     (dfs {:a [:b :c :d]} :a)
     false [nil :a]
-    down
+    (down)
     false [:a :b]
-    across
+    (across)
     false [:a :c]
-    across
+    (across)
     false [:a :d]
-    across
+    (across)
     true [:a :d]))
 (deftest dfs-up
   (test-traverse
     (dfs {:a [:b] :b [:c]} :a)
     false [nil :a]
-    down
+    (down)
     false [:a :b]
-    down
+    (down)
     false [:b :c]
-    up
+    (up)
     false [:a :b]
-    up
+    (up)
     false [nil :a]
-    up
+    (up)
     true [nil :a]))
