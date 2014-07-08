@@ -26,7 +26,7 @@
   (fail [this]
     (StackDFS. false stack children))
   (success? [this]
-    (. this success))
+    success)
   (last-edge [this]
     [(first (peek (pop stack)))
      (first (peek stack))]))
