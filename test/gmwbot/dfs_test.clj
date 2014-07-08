@@ -98,7 +98,7 @@
     (df/scan-children #(= :z %))
     false [nil :a]))
 
-(deftest dfs-prune-seen-2loop
+(deftest prune-seen-parent
   (let [search (df/dfs {:a [:b] :b [:a]} :a)]
     (test-traverse
       search
@@ -116,7 +116,7 @@
       true [:a :b]
       (df/down)
       false [:a :b])))
-(deftest dfs-prune-seen-1loop
+(deftest prune-seen-self
   (let [search (df/dfs {:a [:a]} :a)]
     (test-traverse
       search
@@ -130,7 +130,7 @@
       true [nil :a]
       (df/down)
       false [nil :a])))
-(deftest dfs-prune-seen-sibling
+(deftest prune-seen-sister
   (let [search (df/dfs {:a [:b :c :b] :b []} :a)]
     (test-traverse
       search
@@ -152,7 +152,7 @@
       true [:a :c]
       (df/across)
       false [:a :c])))
-(deftest dfs-prune-seen-niece
+(deftest prune-seen-niece
   (let [search (df/dfs {:a [:b :c] :b [:c]} :a)]
     (test-traverse
       search
@@ -176,7 +176,7 @@
       true [:a :b]
       (df/across)
       false [:a :b])))
-(deftest dfs-prune-seen-aunt
+(deftest prune-seen-aunt
   (let [search (df/dfs {:a [:b :c] :b [] :c [:b]} :a)]
     (test-traverse
       search
