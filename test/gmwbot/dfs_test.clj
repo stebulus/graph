@@ -258,3 +258,13 @@
 (deftest preorder-tree
   (is (= (df/preorder-tree (df/dfs {:a [:b :c] :b [:x :y] :c [:x]} :a))
          [:a :b :x :y :c :x])))
+
+(deftest postorder
+  (is (= (df/postorder (df/dfs {:a [:b :c] :b [:x :y]} :a))
+         [:x :y :b :c :a])))
+(deftest postorder-pruned
+  (is (= (df/postorder (df/dfs {:a [:b :c] :b [:x :a :y] :c [:x]} :a))
+         [:x :y :b :c :a])))
+(deftest postorder-tree
+  (is (= (df/postorder-tree (df/dfs {:a [:b :c] :b [:x :y] :c [:x]} :a))
+         [:x :y :b :x :c :a])))

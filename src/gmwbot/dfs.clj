@@ -110,3 +110,19 @@
   "Returns a lazy seq of nodes as by a preorder traversal of search.
   Skips nodes that have appeared before."
   (preorder-tree (prune-seen search)))
+
+(defn postorder-tree [search]
+  "Returns a lazy seq of nodes as by a postorder traversal of search.
+  If a node is reachable in more than one way from the initial node,
+  it will appear in the seq multiple times; attempting to realize
+  any element of a loop will hang.  (As the name suggests, this is
+  an appropriate function if you know the graph is a tree.)"
+  (->> (stepper search)
+       (iterate step)
+       (take-while identity)
+       (filter #(not (inbound? %)))
+       (map current)))
+(defn postorder [search]
+  "Returns a lazy seq of nodes as by a postorder traversal of search.
+  Skips nodes that have appeared before."
+  (postorder-tree (prune-seen search)))
