@@ -196,16 +196,6 @@
       (df/down)
       nil)))
 
-(deftest preorder
-  (is (= (df/preorder (df/dfs {:a [:b :c] :b [:x :y]} :a))
-         [:a :b :x :y :c])))
-(deftest preorder-pruned
-  (is (= (df/preorder (df/dfs {:a [:b :c] :b [:x :a :y] :c [:x]} :a))
-         [:a :b :x :y :c])))
-(deftest preorder-tree
-  (is (= (df/preorder-tree (df/dfs {:a [:b :c] :b [:x :y] :c [:x]} :a))
-         [:a :b :x :y :c :x])))
-
 (deftest fail-on-loop-down
   (let [verge (-> (df/dfs  {:a [:a]} :a)
                   (df/fail-on-loop))]
@@ -258,3 +248,13 @@
           (is (= false (df/inbound? stepper)))
           (df/step stepper))
         (is nil? stepper)))
+
+(deftest preorder
+  (is (= (df/preorder (df/dfs {:a [:b :c] :b [:x :y]} :a))
+         [:a :b :x :y :c])))
+(deftest preorder-pruned
+  (is (= (df/preorder (df/dfs {:a [:b :c] :b [:x :a :y] :c [:x]} :a))
+         [:a :b :x :y :c])))
+(deftest preorder-tree
+  (is (= (df/preorder-tree (df/dfs {:a [:b :c] :b [:x :y] :c [:x]} :a))
+         [:a :b :x :y :c :x])))
