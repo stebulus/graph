@@ -27,9 +27,8 @@
     (when-let [s (across search)]
       (recur s pred))))
 (defn scan-children [search pred]
-  (when-let [s (down search)]
-    (when-let [s (scan-across s pred)]
-      s)))
+  (some-> (down search)
+          (scan-across pred)))
 (defrecord PrunedDFS [search seen]
   DepthFirstSearch
   (down [this]
