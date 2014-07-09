@@ -51,6 +51,29 @@
 (defn prune-seen [search]
   (PrunedDFS. search #{(current search)}))
 
+(defrecord FailOnLoopDFS [search ancestors]
+  DepthFirstSearch
+  (down [this]
+    (when-some [s (down search)]
+      (let [curr (current s)]
+        (if (contains? ancestors curr)
+          (throw (IllegalStateException. (str "loop: " s)))
+          (FailOnLoopDFS. s (conj ancestors curr))))))
+  (across [this]
+    (when-some [s (across search)]
+      (let [anc (disj ancestors (current search))
+            curr (current s)]
+        (if (contains? anc curr)
+          (throw (IllegalStateException. (str "loop: " s)))
+          (FailOnLoopDFS. s (conj anc curr))))))
+  (up [this]
+    (when-some [s (up search)]
+      (FailOnLoopDFS. s (disj ancestors (current search)))))
+  (current [this]
+    (current search)))
+(defn fail-on-loop [search]
+  (FailOnLoopDFS. search #{(current search)}))
+
 (defn step [search]
   (or (down search)
       (->> (iterate up search)
