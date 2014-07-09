@@ -25,10 +25,10 @@
   (StackDFS. [[start]] graph))
 
 (defn scan-across [search pred]
-  (if (pred (second (last-edge search)))
-    search
-    (when-some [s (across search)]
-      (recur s pred))))
+  (->> (iterate across search)
+       (take-while identity)
+       (filter #(pred (second (last-edge %))))
+       (first)))
 (defn scan-children [search pred]
   (some-> (down search)
           (scan-across pred)))
