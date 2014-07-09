@@ -72,26 +72,6 @@
 (defn fail-on-loop [search]
   (FailOnLoopDFS. search #{(current search)}))
 
-(defn preorder-step [search]
-  (or (down search)
-      (->> (iterate up search)
-           (take-while identity)
-           (map across)
-           (some identity))))
-(defn preorder-tree [search]
-  "Returns a lazy seq of nodes as by a preorder traversal of search.
-  If a node is reachable in more than one way from the initial node,
-  it will appear in the seq multiple times; if there is a loop in
-  the graph, the seq will get trapped in it.  (As the name suggests,
-  this is an appropriate function if you know the graph is a tree.)"
-  (->> (iterate preorder-step search)
-       (take-while identity)
-       (map current)))
-(defn preorder [search]
-  "Returns a lazy seq of nodes as by a preorder traversal of search.
-  Skips nodes that have appeared before."
-  (preorder-tree (prune-seen search)))
-
 (declare stepper-move)
 (defrecord StepperDFS [search inbound]
   DepthFirstSearch
@@ -114,3 +94,23 @@
   (if (inbound? stepdfs)
     (or (down stepdfs) (stepper-move stepdfs identity false))
     (or (across stepdfs) (up stepdfs))))
+
+(defn preorder-step [search]
+  (or (down search)
+      (->> (iterate up search)
+           (take-while identity)
+           (map across)
+           (some identity))))
+(defn preorder-tree [search]
+  "Returns a lazy seq of nodes as by a preorder traversal of search.
+  If a node is reachable in more than one way from the initial node,
+  it will appear in the seq multiple times; if there is a loop in
+  the graph, the seq will get trapped in it.  (As the name suggests,
+  this is an appropriate function if you know the graph is a tree.)"
+  (->> (iterate preorder-step search)
+       (take-while identity)
+       (map current)))
+(defn preorder [search]
+  "Returns a lazy seq of nodes as by a preorder traversal of search.
+  Skips nodes that have appeared before."
+  (preorder-tree (prune-seen search)))
