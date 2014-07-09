@@ -4,7 +4,7 @@
   (down [this])
   (across [this])
   (up [this])
-  (last-edge [this]))
+  (current [this]))
 
 (defrecord StackDFS [stack children]
   DepthFirstSearch
@@ -18,16 +18,15 @@
     (let [s (pop stack)]
       (when-not (empty? s)
         (StackDFS. s children))))
-  (last-edge [this]
-    [(first (peek (pop stack)))
-     (first (peek stack))]))
+  (current [this]
+    (first (peek stack))))
 (defn dfs [graph start]
   (StackDFS. [[start]] graph))
 
 (defn scan-across [search pred]
   (->> (iterate across search)
        (take-while identity)
-       (filter #(pred (second (last-edge %))))
+       (filter #(pred (current %)))
        (first)))
 (defn scan-children [search pred]
   (some-> (down search)
@@ -37,17 +36,17 @@
   DepthFirstSearch
   (down [this]
     (when-some [s (scan-children search #(not (contains? seen %)))]
-      (PrunedDFS. s (conj seen (second (last-edge s))))))
+      (PrunedDFS. s (conj seen (current s)))))
   (across [this]
     (when-some [s (scan-across search #(not (contains? seen %)))]
-      (PrunedDFS. s (conj seen (second (last-edge s))))))
+      (PrunedDFS. s (conj seen (current s)))))
   (up [this]
     (when-some [s (up search)]
       (PrunedDFS. s seen)))
-  (last-edge [this]
-    (last-edge search)))
+  (current [this]
+    (current search)))
 (defn prune-seen [search]
-  (PrunedDFS. search #{(second (last-edge search))}))
+  (PrunedDFS. search #{(current search)}))
 
 (defn step [search]
   (or (down search)
@@ -63,7 +62,7 @@
   this is an appropriate function if you know the graph is a tree.)"
   (->> (iterate step search)
        (take-while identity)
-       (map #(second (last-edge %)))))
+       (map current)))
 (defn preorder [search]
   "Returns a lazy seq of nodes as by a preorder traversal of search.
   Skips nodes that have appeared before."

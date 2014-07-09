@@ -4,28 +4,28 @@
 
 (defn- test-traverse-clause
   "Helper function for macro test-traverse."
-  ([search-sym edge]
+  ([search-sym node]
     `(do
-       (if-let [edge# ~edge]
-         (is (= edge# (df/last-edge ~search-sym)))
+       (if-let [node# ~node]
+         (is (= node# (df/current ~search-sym)))
          (is (nil? ~search-sym)))))
-  ([search-sym edge form]
-    (concat (test-traverse-clause search-sym edge)
+  ([search-sym node form]
+    (concat (test-traverse-clause search-sym node)
             `((~(first form) ~search-sym ~@(rest form))))))
 (defmacro test-traverse [dfs & forms]
   "Test a sequence of maneuvers in a depth-first search.  The first
   argument is an expression evaluating to an implementation of
   gmwbot.dfs/DepthFirstSearch.  The remaining forms describe a sequence
-  of tests, alternating between the edge expected from (last-edge dfs)
+  of tests, alternating between the node expected from (current dfs)
   and a form into which dfs will be threaded as the first argument;
   the value of the resulting form will be used as the dfs for the
   subsequent forms.  For example,
     (require '[gmwbot.dfs :as df])
     (test-traverse
       (df/dfs {:a [:b]} :a)
-      [nil :a]
+      :a
       (df/down)
-      [:a :b]
+      :b
       (df/down)
       nil)
   verifies the initial state, moves down, verifies the resulting state,
@@ -39,61 +39,61 @@
 (deftest down
   (test-traverse
     (df/dfs {:a [:b] :b [:c]} :a)
-    [nil :a]
+    :a
     (df/down)
-    [:a :b]
+    :b
     (df/down)
-    [:b :c]
+    :c
     (df/down)
     nil))
 (deftest across
   (test-traverse
     (df/dfs {:a [:b :c :d]} :a)
-    [nil :a]
+    :a
     (df/down)
-    [:a :b]
+    :b
     (df/across)
-    [:a :c]
+    :c
     (df/across)
-    [:a :d]
+    :d
     (df/across)
     nil))
 (deftest up
   (test-traverse
     (df/dfs {:a [:b] :b [:c]} :a)
-    [nil :a]
+    :a
     (df/down)
-    [:a :b]
+    :b
     (df/down)
-    [:b :c]
+    :c
     (df/up)
-    [:a :b]
+    :b
     (df/up)
-    [nil :a]
+    :a
     (df/up)
     nil))
 
 (deftest scan-across
   (test-traverse
     (df/dfs {:a [:b :c :d :e]} :a)
-    [nil :a]
+    :a
     (df/down)
-    [:a :b]
+    :b
     (df/scan-across #(= :b %))
-    [:a :b]
+    :b
     (df/scan-across #(= :d %))
-    [:a :d]
+    :d
     (df/scan-across #(= :f %))
     nil))
 (deftest scan-children
   (test-traverse
     (df/dfs {:a [:b :c :d]} :a)
-    [nil :a]
+    :a
     (df/scan-children #(= :c %))
-    [:a :c])
+    :c)
   (test-traverse
     (df/dfs {:a [:b :c :d]} :a)
-    [nil :a]
+    :a
     (df/scan-children #(= :z %))
     nil))
 
@@ -101,113 +101,113 @@
   (let [search (df/dfs {:a [:b] :b [:a]} :a)]
     (test-traverse
       search
-      [nil :a]
+      :a
       (df/down)
-      [:a :b]
+      :b
       (df/down)
-      [:b :a]
+      :a
       (df/down)
-      [:a :b])
+      :b)
     (test-traverse
       (df/prune-seen search)
-      [nil :a]
+      :a
       (df/down)
-      [:a :b]
+      :b
       (df/down)
       nil)))
 (deftest prune-seen-self
   (let [search (df/dfs {:a [:a]} :a)]
     (test-traverse
       search
-      [nil :a]
+      :a
       (df/down)
-      [:a :a]
+      :a
       (df/down)
-      [:a :a])
+      :a)
     (test-traverse
       (df/prune-seen search)
-      [nil :a]
+      :a
       (df/down)
       nil)))
 (deftest prune-seen-sister
   (let [search (df/dfs {:a [:b :c :b] :b []} :a)]
     (test-traverse
       search
-      [nil :a]
+      :a
       (df/down)
-      [:a :b]
+      :b
       (df/across)
-      [:a :c]
+      :c
       (df/across)
-      [:a :b]
+      :b
       (df/across)
       nil)
     (test-traverse
       (df/prune-seen search)
-      [nil :a]
+      :a
       (df/down)
-      [:a :b]
+      :b
       (df/across)
-      [:a :c]
+      :c
       (df/across)
       nil)))
 (deftest prune-seen-niece
   (let [search (df/dfs {:a [:b :c] :b [:c]} :a)]
     (test-traverse
       search
-      [nil :a]
+      :a
       (df/down)
-      [:a :b]
+      :b
       (df/down)
-      [:b :c]
+      :c
       (df/up)
-      [:a :b]
+      :b
       (df/across)
-      [:a :c])
+      :c)
     (test-traverse
       (df/prune-seen search)
-      [nil :a]
+      :a
       (df/down)
-      [:a :b]
+      :b
       (df/down)
-      [:b :c]
+      :c
       (df/up)
-      [:a :b]
+      :b
       (df/across)
       nil)))
 (deftest prune-seen-aunt
   (let [search (df/dfs {:a [:b :c] :b [] :c [:b]} :a)]
     (test-traverse
       search
-      [nil :a]
+      :a
       (df/down)
-      [:a :b]
+      :b
       (df/across)
-      [:a :c]
+      :c
       (df/down)
-      [:c :b])
+      :b)
     (test-traverse
       (df/prune-seen search)
-      [nil :a]
+      :a
       (df/down)
-      [:a :b]
+      :b
       (df/across)
-      [:a :c]
+      :c
       (df/down)
       nil)))
 
 (deftest step
   (test-traverse
     (df/dfs {:a [:b :c] :b [:x :y]} :a)
-    [nil :a]
+    :a
     (df/step)
-    [:a :b]
+    :b
     (df/step)
-    [:b :x]
+    :x
     (df/step)
-    [:b :y]
+    :y
     (df/step)
-    [:a :c]
+    :c
     (df/step)
     nil))
 
