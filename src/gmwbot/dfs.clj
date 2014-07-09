@@ -95,20 +95,16 @@
     (or (down stepdfs) (stepper-move stepdfs identity false))
     (or (across stepdfs) (up stepdfs))))
 
-(defn preorder-step [search]
-  (or (down search)
-      (->> (iterate up search)
-           (take-while identity)
-           (map across)
-           (some identity))))
 (defn preorder-tree [search]
   "Returns a lazy seq of nodes as by a preorder traversal of search.
   If a node is reachable in more than one way from the initial node,
   it will appear in the seq multiple times; if there is a loop in
   the graph, the seq will get trapped in it.  (As the name suggests,
   this is an appropriate function if you know the graph is a tree.)"
-  (->> (iterate preorder-step search)
+  (->> (stepper search)
+       (iterate step)
        (take-while identity)
+       (filter inbound?)
        (map current)))
 (defn preorder [search]
   "Returns a lazy seq of nodes as by a preorder traversal of search.
