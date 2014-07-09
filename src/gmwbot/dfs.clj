@@ -7,10 +7,10 @@
 (defrecord StackDFS [stack children]
   DepthFirstSearch
   (down [this]
-    (when-let [s (seq (children (first (peek stack))))]
+    (when-some [s (seq (children (first (peek stack))))]
       (StackDFS. (conj stack s) children)))
   (across [this]
-    (when-let [s (next (peek stack))]
+    (when-some [s (next (peek stack))]
       (StackDFS. (conj (pop stack) s) children)))
   (up [this]
     (let [s (pop stack)]
@@ -24,7 +24,7 @@
 (defn scan-across [search pred]
   (if (pred (second (last-edge search)))
     search
-    (when-let [s (across search)]
+    (when-some [s (across search)]
       (recur s pred))))
 (defn scan-children [search pred]
   (some-> (down search)
@@ -32,13 +32,13 @@
 (defrecord PrunedDFS [search seen]
   DepthFirstSearch
   (down [this]
-    (when-let [s (scan-children search #(not (contains? seen %)))]
+    (when-some [s (scan-children search #(not (contains? seen %)))]
       (PrunedDFS. s (conj seen (second (last-edge s))))))
   (across [this]
-    (when-let [s (scan-across search #(not (contains? seen %)))]
+    (when-some [s (scan-across search #(not (contains? seen %)))]
       (PrunedDFS. s (conj seen (second (last-edge s))))))
   (up [this]
-    (when-let [s (up search)]
+    (when-some [s (up search)]
       (PrunedDFS. s seen)))
   (last-edge [this]
     (last-edge search)))
