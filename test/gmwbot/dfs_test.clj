@@ -196,19 +196,19 @@
       (df/down)
       nil)))
 
-(deftest step
+(deftest preorder-step
   (test-traverse
     (df/dfs {:a [:b :c] :b [:x :y]} :a)
     :a
-    (df/step)
+    (df/preorder-step)
     :b
-    (df/step)
+    (df/preorder-step)
     :x
-    (df/step)
+    (df/preorder-step)
     :y
-    (df/step)
+    (df/preorder-step)
     :c
-    (df/step)
+    (df/preorder-step)
     nil))
 
 (deftest preorder

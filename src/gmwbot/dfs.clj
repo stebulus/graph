@@ -72,7 +72,7 @@
 (defn fail-on-loop [search]
   (FailOnLoopDFS. search #{(current search)}))
 
-(defn step [search]
+(defn preorder-step [search]
   (or (down search)
       (->> (iterate up search)
            (take-while identity)
@@ -84,7 +84,7 @@
   it will appear in the seq multiple times; if there is a loop in
   the graph, the seq will get trapped in it.  (As the name suggests,
   this is an appropriate function if you know the graph is a tree.)"
-  (->> (iterate step search)
+  (->> (iterate preorder-step search)
        (take-while identity)
        (map current)))
 (defn preorder [search]
