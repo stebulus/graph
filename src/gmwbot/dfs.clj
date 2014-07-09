@@ -91,3 +91,26 @@
   "Returns a lazy seq of nodes as by a preorder traversal of search.
   Skips nodes that have appeared before."
   (preorder-tree (prune-seen search)))
+
+(declare stepper-move)
+(defrecord StepperDFS [search inbound]
+  DepthFirstSearch
+  (down [this]
+    (stepper-move this down true))
+  (across [this]
+    (stepper-move this across true))
+  (up [this]
+    (stepper-move this up false))
+  (current [this]
+    (current search)))
+(defn- stepper-move [stepdfs move inbound]
+  (when-let [s (move (.search stepdfs))]
+    (StepperDFS. s inbound)))
+(defn stepper [search]
+  (StepperDFS. search true))
+(defn inbound? [stepdfs]
+  (.inbound stepdfs))
+(defn step [stepdfs]
+  (if (inbound? stepdfs)
+    (or (down stepdfs) (stepper-move stepdfs identity false))
+    (or (across stepdfs) (up stepdfs))))

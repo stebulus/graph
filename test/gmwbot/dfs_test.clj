@@ -236,3 +236,40 @@
          (df/preorder-tree
            (df/fail-on-loop
              (df/dfs {:a [:b :c] :c [:b]} :a))))))
+
+(deftest stepping
+  (as-> (df/stepper (df/dfs {:a [:b :c] :c [:b]} :a))
+        stepper
+        (do
+          (is (= :a (df/current stepper)))
+          (is (= true (df/inbound? stepper)))
+          (df/step stepper))
+        (do
+          (is (= :b (df/current stepper)))
+          (is (= true (df/inbound? stepper)))
+          (df/step stepper))
+        (do
+          (is (= :b (df/current stepper)))
+          (is (= false (df/inbound? stepper)))
+          (df/step stepper))
+        (do
+          (is (= :c (df/current stepper)))
+          (is (= true (df/inbound? stepper)))
+          (df/step stepper))
+        (do
+          (is (= :b (df/current stepper)))
+          (is (= true (df/inbound? stepper)))
+          (df/step stepper))
+        (do
+          (is (= :b (df/current stepper)))
+          (is (= false (df/inbound? stepper)))
+          (df/step stepper))
+        (do
+          (is (= :c (df/current stepper)))
+          (is (= false (df/inbound? stepper)))
+          (df/step stepper))
+        (do
+          (is (= :a (df/current stepper)))
+          (is (= false (df/inbound? stepper)))
+          (df/step stepper))
+        (is nil? stepper)))
