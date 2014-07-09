@@ -1,9 +1,11 @@
 (ns gmwbot.dfs)
+
 (defprotocol DepthFirstSearch
   (down [this])
   (across [this])
   (up [this])
   (last-edge [this]))
+
 (defrecord StackDFS [stack children]
   DepthFirstSearch
   (down [this]
@@ -21,6 +23,7 @@
      (first (peek stack))]))
 (defn dfs [graph start]
   (StackDFS. [[start]] graph))
+
 (defn scan-across [search pred]
   (if (pred (second (last-edge search)))
     search
@@ -29,6 +32,7 @@
 (defn scan-children [search pred]
   (some-> (down search)
           (scan-across pred)))
+
 (defrecord PrunedDFS [search seen]
   DepthFirstSearch
   (down [this]
@@ -51,7 +55,6 @@
            (take-while identity)
            (map across)
            (some identity))))
-
 (defn preorder-tree [search]
   "Returns a lazy seq of nodes as by a preorder traversal of search.
   If a node is reachable in more than one way from the initial node,
