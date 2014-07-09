@@ -46,13 +46,11 @@
   (PrunedDFS. search #{(second (last-edge search))}))
 
 (defn step [search]
-  (if-let [s (down search)]
-    s
-    (loop [s search]
-      (if-let [s (across s)]
-        s
-        (when-let [s (up s)]
-          (recur s))))))
+  (or (down search)
+      (->> (iterate up search)
+           (take-while identity)
+           (map across)
+           (some identity))))
 
 (defn preorder-tree [search]
   "Returns a lazy seq of nodes as by a preorder traversal of search.
