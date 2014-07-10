@@ -23,6 +23,25 @@
 (defn dfs [graph start]
   (StackDFS. [[start]] graph))
 
+(declare seen-move)
+(defrecord SeenDFS [search seen]
+  DepthFirstSearch
+  (down [this]
+    (seen-move search down seen))
+  (across [this]
+    (seen-move search across seen))
+  (up [this]
+    (seen-move search up seen))
+  (current [this]
+    (current search)))
+(defn- seen-move [search move seen]
+  (when-some [s (move search)]
+    (SeenDFS. s (conj seen (current search)))))
+(defn track-seen [search]
+  (SeenDFS. search #{}))
+(defn seen? [seendfs]
+  (contains? (.seen seendfs) (current seendfs)))
+
 (defn scan-across [search pred]
   (->> (iterate across search)
        (take-while some?)
