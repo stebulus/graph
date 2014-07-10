@@ -142,6 +142,56 @@
     (df/down)
     [:x true]))
 
+(deftest prune-down
+  (test-traverse
+    (df/prune #(= :b (df/current %))
+              (df/dfs {:a [:b :c] :b [:x :y]} :a))
+    df/current
+    :a
+    (df/down)
+    :c)
+  (test-traverse
+    (df/prune #(= :b (df/current %))
+              (df/dfs {:a [:b :b] :b [:x :y]} :a))
+    df/current
+    :a
+    (df/down)
+    nil))
+(deftest prune-across
+  (test-traverse
+    (df/prune #(= :c (df/current %))
+              (df/dfs {:a [:b :c :d] :c [:x :y]} :a))
+    df/current
+    :a
+    (df/down)
+    :b
+    (df/across)
+    :d)
+  (test-traverse
+    (df/prune #(= :c (df/current %))
+              (df/dfs {:a [:b :c] :c [:x :y]} :a))
+    df/current
+    :a
+    (df/down)
+    :b
+    (df/across)
+    nil))
+(deftest prune-up
+  (test-traverse
+    (df/prune #(= :c (df/current %))
+              (-> (df/dfs {:a [:b :c :d] :c [:x :c :y]} :a)
+                  (df/down)
+                  (df/across)
+                  (df/down)))
+    df/current
+    :x
+    (df/across)
+    :y
+    (df/up)
+    :c
+    (df/across)
+    :d))
+
 (deftest scan-across
   (test-traverse
     (df/dfs {:a [:b :c :d :e]} :a)
