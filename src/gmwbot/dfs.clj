@@ -45,7 +45,7 @@
 (defn- seen-move [move seen search]
   (some->> (move search)
            (SeenDFS. (conj seen (current search)))))
-(defn track-seen [search]
+(defn record-seen [search]
   (SeenDFS. #{} search))
 (defn seen? [seendfs]
   (contains? (.seen seendfs) (current seendfs)))
@@ -69,7 +69,7 @@
   (PrunedDFS. pred search))
 
 (defn prune-seen [search]
-  (prune seen? (track-seen search)))
+  (prune seen? (record-seen search)))
 
 (declare fail-on-loop-move)
 (defrecord FailOnLoopDFS [search ancestors]

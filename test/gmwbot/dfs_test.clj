@@ -108,7 +108,7 @@
 
 (deftest seen-parent
   (test-traverse
-    (df/track-seen (df/dfs {:a [:b] :b [:a]} :a))
+    (df/record-seen (df/dfs {:a [:b] :b [:a]} :a))
     (juxt df/current df/seen?)
     [:a false]
     (df/down)
@@ -117,14 +117,14 @@
     [:a true]))
 (deftest seen-self
   (test-traverse
-    (df/track-seen (df/dfs {:a [:a]} :a))
+    (df/record-seen (df/dfs {:a [:a]} :a))
     (juxt df/current df/seen?)
     [:a false]
     (df/down)
     [:a true]))
 (deftest seen-sibling
   (test-traverse
-    (df/track-seen (df/dfs {:a [:b :b]} :a))
+    (df/record-seen (df/dfs {:a [:b :b]} :a))
     (juxt df/current df/seen?)
     [:a false]
     (df/down)
@@ -133,7 +133,7 @@
     [:b true]))
 (deftest seen-niece
   (test-traverse
-    (df/track-seen (df/dfs {:a [:b :c] :b [:c]} :a))
+    (df/record-seen (df/dfs {:a [:b :c] :b [:c]} :a))
     (juxt df/current df/seen?)
     [:a false]
     (df/down)
@@ -146,7 +146,7 @@
     [:c true]))
 (deftest seen-aunt
   (test-traverse
-    (df/track-seen (df/dfs {:a [:b :c] :c [:b]} :a))
+    (df/record-seen (df/dfs {:a [:b :c] :c [:b]} :a))
     (juxt df/current df/seen?)
     [:a false]
     (df/down)
@@ -157,7 +157,7 @@
     [:b true]))
 (deftest seen-cousin
   (test-traverse
-    (df/track-seen (df/dfs {:a [:b :c] :b [:x] :c [:x]} :a))
+    (df/record-seen (df/dfs {:a [:b :c] :b [:x] :c [:x]} :a))
     (juxt df/current df/seen?)
     [:a false]
     (df/down)
