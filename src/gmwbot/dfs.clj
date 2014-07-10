@@ -9,11 +9,13 @@
 (defrecord StackDFS [children stack]
   DepthFirstSearch
   (down [this]
-    (when-some [s (seq (children (first (peek stack))))]
-      (StackDFS. children (conj stack s))))
+    (some->> (seq (children (first (peek stack))))
+             (conj stack)
+             (StackDFS. children)))
   (across [this]
-    (when-some [s (next (peek stack))]
-      (StackDFS. children (conj (pop stack) s))))
+    (some->> (next (peek stack))
+             (conj (pop stack))
+             (StackDFS. children)))
   (up [this]
     (let [s (pop stack)]
       (when-not (empty? s)
