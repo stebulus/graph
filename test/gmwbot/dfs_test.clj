@@ -7,7 +7,9 @@
   ([search-sym f node]
     `(do
        (if-let [node# ~node]
-         (is (= node# (~f ~search-sym)))
+         (do
+           (is (some? ~search-sym))
+           (is (= node# (~f ~search-sym))))
          (is (nil? ~search-sym)))))
   ([search-sym f node form]
     (concat (test-traverse-clause search-sym f node)
