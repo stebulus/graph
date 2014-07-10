@@ -57,14 +57,14 @@
     (some-> (down search)
             (->> (iterate across)
                  (take-while some?)
-                 (filter #(not (pred %)))
+                 (drop-while pred)
                  (first))
             (PrunedDFS. pred)))
   (across [this]
     (some-> (across search)
             (->> (iterate across)
                  (take-while some?)
-                 (filter #(not (pred %)))
+                 (drop-while pred)
                  (first))
             (PrunedDFS. pred)))
   (up [this]
