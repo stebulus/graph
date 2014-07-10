@@ -1,4 +1,6 @@
-(ns gmwbot.dfs)
+(ns gmwbot.dfs
+  (:refer-clojure :exclude [reduce])
+  (:require [clojure.core :as core]))
 
 (defprotocol DepthFirstSearch
   (down [this])
@@ -177,3 +179,20 @@
   "Returns a lazy seq of nodes as by a postorder traversal of search.
   Skips nodes that have appeared before."
   (postorder-tree (prune-seen search)))
+
+(defn reduce [f initf search]
+  (core/reduce (fn [stack s]
+                   (if (inbound? s)
+                     (conj stack (initf s))
+                     (let [top (peek stack)
+                           stack (pop stack)]
+                       (if (empty? stack)
+                         top
+                         (conj (pop stack)
+                               (f (peek stack) top))))))
+               []
+               (->> (reroot search)
+                    (never loop?)
+                    (stepper)
+                    (iterate step)
+                    (take-while some?))))

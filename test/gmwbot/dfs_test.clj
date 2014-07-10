@@ -151,6 +151,12 @@
     (df/across)
     [:c true]))
 
+(deftest dfreduce
+  (is (= [:a [:b [:x] [:y]] [:c]]
+         (df/reduce conj
+                    (fn [x] [(df/current x)])
+                    (df/dfs {:a [:b :c] :b [:x :y]} :a)))))
+
 (deftest never-down
   (let [verge (->> (df/dfs {:a [:b :c] :b [:x :y]} :a)
                    (df/never #(= :b (df/current %))))]
