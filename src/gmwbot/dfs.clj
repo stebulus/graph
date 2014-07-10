@@ -42,14 +42,11 @@
 (defn seen? [seendfs]
   (contains? (.seen seendfs) (current seendfs)))
 
-(defn scan-across [pred search]
-  (->> (iterate across search)
+(defn scan [f pred search]
+  (->> (iterate f search)
        (take-while some?)
-       (filter #(pred (current %)))
+       (drop-while #(not (pred %)))
        (first)))
-(defn scan-children [pred search]
-  (some->> (down search)
-           (scan-across pred)))
 
 (defrecord PrunedDFS [pred search]
   DepthFirstSearch

@@ -201,24 +201,11 @@
     :a
     (df/down)
     :b
-    (df/scan-across #(= :b %))
+    (df/scan df/across #(= :b (df/current %)))
     :b
-    (df/scan-across #(= :d %))
+    (df/scan df/across #(= :d (df/current %)))
     :d
-    (df/scan-across #(= :f %))
-    nil))
-(deftest scan-children
-  (test-traverse
-    (df/dfs {:a [:b :c :d]} :a)
-    df/current
-    :a
-    (df/scan-children #(= :c %))
-    :c)
-  (test-traverse
-    (df/dfs {:a [:b :c :d]} :a)
-    df/current
-    :a
-    (df/scan-children #(= :z %))
+    (df/scan df/across #(= :f (df/current %)))
     nil))
 
 (deftest fail-on-loop-down
