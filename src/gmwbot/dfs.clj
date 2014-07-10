@@ -54,17 +54,11 @@
   DepthFirstSearch
   (down [this]
     (some->> (down search)
-             (iterate across)
-             (take-while some?)
-             (drop-while pred)
-             (first)
+             (skip across pred)
              (PrunedDFS. pred)))
   (across [this]
     (some->> (across search)
-             (iterate across)
-             (take-while some?)
-             (drop-while pred)
-             (first)
+             (skip across pred)
              (PrunedDFS. pred)))
   (up [this]
     (some->> (up search)
