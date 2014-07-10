@@ -39,8 +39,13 @@
          (map current)
          (some #(= curr %)))))
 
+(defprotocol Wrapper
+  (unwrap [this]))
+
 (declare never-move)
 (defrecord NeverDFS [pred search]
+  Wrapper
+  (unwrap [this] search)
   DepthFirstSearch
   (down [this]
     (never-move down pred search))
@@ -59,6 +64,8 @@
 
 (declare seen-move)
 (defrecord SeenDFS [seen search]
+  Wrapper
+  (unwrap [this] search)
   DepthFirstSearch
   (down [this]
     (seen-move down seen search))
@@ -77,6 +84,8 @@
   (contains? (.seen seendfs) (current seendfs)))
 
 (defrecord PrunedDFS [pred search]
+  Wrapper
+  (unwrap [this] search)
   DepthFirstSearch
   (down [this]
     (some->> (down search)
@@ -99,6 +108,8 @@
 
 (declare stepper-move)
 (defrecord StepperDFS [search inbound]
+  Wrapper
+  (unwrap [this] search)
   DepthFirstSearch
   (down [this]
     (stepper-move this down true))
