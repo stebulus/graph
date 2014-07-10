@@ -31,6 +31,14 @@
 (defn scan [move pred search]
   (skip move #(not (pred %)) search))
 
+(defn loop? [search]
+  (let [curr (current search)]
+    (->> (iterate up search)
+         (take-while some?)
+         (drop 1)
+         (map current)
+         (some #(= curr %)))))
+
 (declare seen-move)
 (defrecord SeenDFS [seen search]
   DepthFirstSearch

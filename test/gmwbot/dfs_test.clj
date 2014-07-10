@@ -106,6 +106,22 @@
     (df/skip df/across #(not (= :a (df/current %))))
     nil))
 
+(deftest loop?
+  (test-traverse
+    (df/dfs {:a [:b :c] :b [:x :y] :c [:a]} :a)
+    (juxt df/current df/loop?)
+    [:a nil]
+    (df/down)
+    [:b nil]
+    (df/across)
+    [:c nil]
+    (df/down)
+    [:a true]
+    (df/down)
+    [:b nil]
+    (df/across)
+    [:c true]))
+
 (deftest seen-parent
   (test-traverse
     (df/record-seen (df/dfs {:a [:b] :b [:a]} :a))
