@@ -32,21 +32,21 @@
   (skip move #(not (pred %)) search))
 
 (declare seen-move)
-(defrecord SeenDFS [search seen]
+(defrecord SeenDFS [seen search]
   DepthFirstSearch
   (down [this]
-    (seen-move search down seen))
+    (seen-move down seen search))
   (across [this]
-    (seen-move search across seen))
+    (seen-move across seen search))
   (up [this]
-    (seen-move search up seen))
+    (seen-move up seen search))
   (current [this]
     (current search)))
-(defn- seen-move [search move seen]
+(defn- seen-move [move seen search]
   (when-some [s (move search)]
-    (SeenDFS. s (conj seen (current search)))))
+    (SeenDFS. (conj seen (current search)) s)))
 (defn track-seen [search]
-  (SeenDFS. search #{}))
+  (SeenDFS. #{} search))
 (defn seen? [seendfs]
   (contains? (.seen seendfs) (current seendfs)))
 
