@@ -51,24 +51,24 @@
   (some-> (down search)
           (scan-across pred)))
 
-(declare pruned-move)
-(defrecord PrunedDFS [search seen]
+(declare seen-pruned-move)
+(defrecord SeenPrunedDFS [search seen]
   DepthFirstSearch
   (down [this]
-    (pruned-move this scan-children))
+    (seen-pruned-move this scan-children))
   (across [this]
-    (pruned-move this scan-across))
+    (seen-pruned-move this scan-across))
   (up [this]
     (when-some [s (up search)]
-      (PrunedDFS. s seen)))
+      (SeenPrunedDFS. s seen)))
   (current [this]
     (current search)))
-(defn- pruned-move [pdfs scan]
+(defn- seen-pruned-move [pdfs scan]
   (when-some [s (scan (.search pdfs)
                       #(not (contains? (.seen pdfs) %)))]
-    (PrunedDFS. s (conj (.seen pdfs) (current s)))))
+    (SeenPrunedDFS. s (conj (.seen pdfs) (current s)))))
 (defn prune-seen [search]
-  (PrunedDFS. search #{(current search)}))
+  (SeenPrunedDFS. search #{(current search)}))
 
 (declare fail-on-loop-move)
 (defrecord FailOnLoopDFS [search ancestors]
