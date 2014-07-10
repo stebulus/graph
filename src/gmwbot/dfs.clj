@@ -23,6 +23,14 @@
 (defn dfs [graph start]
   (StackDFS. [[start]] graph))
 
+(defn skip [f pred search]
+  (->> (iterate f search)
+       (take-while some?)
+       (drop-while pred)
+       (first)))
+(defn scan [f pred search]
+  (skip f #(not (pred %)) search))
+
 (declare seen-move)
 (defrecord SeenDFS [search seen]
   DepthFirstSearch
@@ -41,14 +49,6 @@
   (SeenDFS. search #{}))
 (defn seen? [seendfs]
   (contains? (.seen seendfs) (current seendfs)))
-
-(defn skip [f pred search]
-  (->> (iterate f search)
-       (take-while some?)
-       (drop-while pred)
-       (first)))
-(defn scan [f pred search]
-  (skip f #(not (pred %)) search))
 
 (defrecord PrunedDFS [pred search]
   DepthFirstSearch

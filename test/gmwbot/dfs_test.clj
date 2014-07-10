@@ -79,6 +79,33 @@
     (df/up)
     nil))
 
+(deftest scan-across
+  (test-traverse
+    (df/dfs {:a [:b :c :d :e]} :a)
+    df/current
+    :a
+    (df/down)
+    :b
+    (df/scan df/across #(= :b (df/current %)))
+    :b
+    (df/scan df/across #(= :d (df/current %)))
+    :d
+    (df/scan df/across #(= :f (df/current %)))
+    nil))
+(deftest skip-across
+  (test-traverse
+    (df/dfs {:a [:b :c :d :e]} :a)
+    df/current
+    :a
+    (df/down)
+    :b
+    (df/skip df/across #(= :c (df/current %)))
+    :b
+    (df/skip df/across #(= :b (df/current %)))
+    :c
+    (df/skip df/across #(not (= :a (df/current %))))
+    nil))
+
 (deftest seen-parent
   (test-traverse
     (df/track-seen (df/dfs {:a [:b] :b [:a]} :a))
@@ -193,33 +220,6 @@
     :c
     (df/across)
     :d))
-
-(deftest scan-across
-  (test-traverse
-    (df/dfs {:a [:b :c :d :e]} :a)
-    df/current
-    :a
-    (df/down)
-    :b
-    (df/scan df/across #(= :b (df/current %)))
-    :b
-    (df/scan df/across #(= :d (df/current %)))
-    :d
-    (df/scan df/across #(= :f (df/current %)))
-    nil))
-(deftest skip-across
-  (test-traverse
-    (df/dfs {:a [:b :c :d :e]} :a)
-    df/current
-    :a
-    (df/down)
-    :b
-    (df/skip df/across #(= :c (df/current %)))
-    :b
-    (df/skip df/across #(= :b (df/current %)))
-    :c
-    (df/skip df/across #(not (= :a (df/current %))))
-    nil))
 
 (deftest fail-on-loop-down
   (let [verge (-> (df/dfs  {:a [:a]} :a)
