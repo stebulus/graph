@@ -122,6 +122,27 @@
     (df/across)
     [:c true]))
 
+(deftest never-down
+  (let [verge (->> (df/dfs {:a [:b :c] :b [:x :y]} :a)
+                   (df/never #(= :b (df/current %))))]
+    (is (thrown? AssertionError (df/down verge)))))
+(deftest never-across
+  (let [verge (->> (df/dfs {:a [:b :c] :b [:x :y]} :a)
+                   (df/never #(= :c (df/current %)))
+                   (df/down))]
+    (is (thrown? AssertionError (df/across verge)))))
+(deftest never-up
+  (let [verge (->> (df/dfs {:a [:b :c] :b [:x :y]} :a)
+                   (df/down)
+                   (df/down)
+                   (df/never #(= :b (df/current %)))
+                   (df/across))]
+    (is (thrown? AssertionError (df/up verge)))))
+(deftest never-immediate
+  (is (thrown? AssertionError
+               (df/never #(= :a (df/current %))
+                         (df/dfs {:a [:b]} :a)))))
+
 (deftest seen-parent
   (test-traverse
     (df/record-seen (df/dfs {:a [:b] :b [:a]} :a))

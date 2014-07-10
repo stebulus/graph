@@ -39,6 +39,24 @@
          (map current)
          (some #(= curr %)))))
 
+(declare never-move)
+(defrecord NeverDFS [pred search]
+  DepthFirstSearch
+  (down [this]
+    (never-move down pred search))
+  (across [this]
+    (never-move across pred search))
+  (up [this]
+    (never-move up pred search))
+  (current [this]
+    (current search)))
+(defn- never-move [move pred search]
+  (when-some [s (move search)]
+    (assert (not (pred s)))
+    (NeverDFS. pred s)))
+(defn never [pred search]
+  (never-move identity pred search))
+
 (declare seen-move)
 (defrecord SeenDFS [seen search]
   DepthFirstSearch
