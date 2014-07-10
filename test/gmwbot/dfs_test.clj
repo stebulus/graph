@@ -79,6 +79,35 @@
     (df/up)
     nil))
 
+(deftest reroot-up
+  (test-traverse
+    (df/dfs {:a [:b :c] :b [:x :y]} :a)
+    df/current
+    :a
+    (df/down)
+    :b
+    (df/reroot)
+    :b
+    (df/up)
+    nil))
+(deftest reroot-across
+  (test-traverse
+    (df/dfs {:a [:b :c] :b [:x :y]} :a)
+    df/current
+    :a
+    (df/down)
+    :b
+    (df/reroot)
+    :b
+    (df/across)
+    nil))
+(deftest reroot-preorder
+  (is (= [:b :x :y]
+         (->> (df/dfs {:a [:b :c] :b [:x :y]} :a)
+              (df/down)
+              (df/reroot)
+              (df/preorder-tree)))))
+
 (deftest scan-across
   (test-traverse
     (df/dfs {:a [:b :c :d :e]} :a)
@@ -142,6 +171,17 @@
   (is (thrown? AssertionError
                (df/never #(= :a (df/current %))
                          (df/dfs {:a [:b]} :a)))))
+(deftest never-reroot
+  (let [atb (->> (df/dfs {:a [:b :c] :b [:x :y] :c [:bad]} :a)
+                 (df/never #(= :bad (df/current %)))
+                 (df/down))]
+    (is (thrown? AssertionError (dorun (df/preorder-tree atb))))
+    (is (= [:b :x :y] (df/preorder-tree (df/reroot atb))))))
+(deftest never-reroot-immediate
+  (let [verge (->> (df/dfs {:a [:b :c]} :a)
+                   (df/down)
+                   (df/never #(nil? (df/up %))))]
+    (is (thrown? AssertionError (df/reroot verge)))))
 
 (deftest seen-parent
   (test-traverse
@@ -207,6 +247,14 @@
     [:c false]
     (df/down)
     [:x true]))
+(deftest seen-reroot
+  (let [atc (->> (df/dfs {:a [:b :c] :b [:x :y] :c [:x]} :a)
+                 (df/record-seen)
+                 (df/stepper)
+                 (df/scan df/step #(= :c (df/current %)))
+                 (df/unwrap))]
+    (is (df/seen? (df/down atc)))
+    (is (not (df/seen? (df/down (df/reroot atc)))))))
 
 (deftest prune-down
   (test-traverse

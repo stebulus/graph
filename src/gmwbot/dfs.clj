@@ -4,8 +4,10 @@
   (down [this])
   (across [this])
   (up [this])
-  (current [this]))
+  (current [this])
+  (reroot [this]))
 
+(declare dfs)
 (defrecord StackDFS [children stack]
   DepthFirstSearch
   (down [this]
@@ -21,7 +23,9 @@
       (when-not (empty? s)
         (StackDFS. children s))))
   (current [this]
-    (first (peek stack))))
+    (first (peek stack)))
+  (reroot [this]
+    (dfs children (current this))))
 (defn dfs [graph start]
   (StackDFS. graph [[start]]))
 
@@ -44,7 +48,7 @@
 (defprotocol Wrapper
   (unwrap [this]))
 
-(declare never-move)
+(declare never-move never)
 (defrecord NeverDFS [pred search]
   Wrapper
   (unwrap [this] search)
@@ -56,7 +60,9 @@
   (up [this]
     (never-move up pred search))
   (current [this]
-    (current search)))
+    (current search))
+  (reroot [this]
+    (never pred (reroot search))))
 (defn- never-move [move pred search]
   (when-some [s (move search)]
     (assert (not (pred s)))
@@ -64,7 +70,7 @@
 (defn never [pred search]
   (never-move identity pred search))
 
-(declare seen-move)
+(declare seen-move record-seen)
 (defrecord SeenDFS [seen search]
   Wrapper
   (unwrap [this] search)
@@ -76,7 +82,9 @@
   (up [this]
     (seen-move up seen search))
   (current [this]
-    (current search)))
+    (current search))
+  (reroot [this]
+    (record-seen (reroot search))))
 (defn- seen-move [move seen search]
   (some->> (move search)
            (SeenDFS. (conj seen (current search)))))
@@ -85,6 +93,7 @@
 (defn seen? [seendfs]
   (contains? (.seen seendfs) (current seendfs)))
 
+(declare prune)
 (defrecord PrunedDFS [pred search]
   Wrapper
   (unwrap [this] search)
@@ -101,14 +110,16 @@
     (some->> (up search)
              (PrunedDFS. pred)))
   (current [this]
-    (current search)))
+    (current search))
+  (reroot [this]
+    (prune pred (reroot search))))
 (defn prune [pred search]
   (PrunedDFS. pred search))
 
 (defn prune-seen [search]
   (prune seen? (record-seen search)))
 
-(declare stepper-move)
+(declare stepper-move stepper)
 (defrecord StepperDFS [search inbound]
   Wrapper
   (unwrap [this] search)
@@ -120,7 +131,9 @@
   (up [this]
     (stepper-move this up false))
   (current [this]
-    (current search)))
+    (current search))
+  (reroot [this]
+    (stepper (reroot search))))
 (defn- stepper-move [stepdfs move inbound]
   (when-let [s (move (.search stepdfs))]
     (StepperDFS. s inbound)))
