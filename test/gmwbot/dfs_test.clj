@@ -258,22 +258,6 @@
     (df/across)
     :d))
 
-(deftest fail-on-loop-down
-  (let [verge (-> (df/dfs  {:a [:a]} :a)
-                  (df/fail-on-loop))]
-    (is (thrown? IllegalStateException (df/down verge)))))
-(deftest fail-on-loop-across
-  (let [verge (-> (df/dfs  {:a [:b :b :a]} :a)
-                  (df/fail-on-loop)
-                  (df/down)
-                  (df/across))]
-    (is (thrown? IllegalStateException (df/across verge)))))
-(deftest fail-on-loop-no-loop
-  (is (= [:a :b :c :b]
-         (df/preorder-tree
-           (df/fail-on-loop
-             (df/dfs {:a [:b :c] :c [:b]} :a))))))
-
 (deftest stepping
   (test-traverse
     (df/stepper (df/dfs {:a [:b :c] :c [:b]} :a))
