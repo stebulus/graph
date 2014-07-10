@@ -51,29 +51,29 @@
   (some->> (down search)
            (scan-across pred)))
 
-(defrecord PrunedDFS [search pred]
+(defrecord PrunedDFS [pred search]
   DepthFirstSearch
   (down [this]
-    (some-> (down search)
-            (->> (iterate across)
-                 (take-while some?)
-                 (drop-while pred)
-                 (first))
-            (PrunedDFS. pred)))
+    (some->> (down search)
+             (iterate across)
+             (take-while some?)
+             (drop-while pred)
+             (first)
+             (PrunedDFS. pred)))
   (across [this]
-    (some-> (across search)
-            (->> (iterate across)
-                 (take-while some?)
-                 (drop-while pred)
-                 (first))
-            (PrunedDFS. pred)))
+    (some->> (across search)
+             (iterate across)
+             (take-while some?)
+             (drop-while pred)
+             (first)
+             (PrunedDFS. pred)))
   (up [this]
-    (some-> (up search)
-            (PrunedDFS. pred)))
+    (some->> (up search)
+             (PrunedDFS. pred)))
   (current [this]
     (current search)))
 (defn prune [pred search]
-  (PrunedDFS. search pred))
+  (PrunedDFS. pred search))
 
 (defn prune-seen [search]
   (prune seen? (track-seen search)))
