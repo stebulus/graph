@@ -43,8 +43,8 @@
   (current [this]
     (current search)))
 (defn- seen-move [move seen search]
-  (when-some [s (move search)]
-    (SeenDFS. (conj seen (current search)) s)))
+  (some->> (move search)
+           (SeenDFS. (conj seen (current search)))))
 (defn track-seen [search]
   (SeenDFS. #{} search))
 (defn seen? [seendfs]
