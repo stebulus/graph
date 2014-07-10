@@ -23,13 +23,13 @@
 (defn dfs [graph start]
   (StackDFS. [[start]] graph))
 
-(defn skip [f pred search]
-  (->> (iterate f search)
+(defn skip [move pred search]
+  (->> (iterate move search)
        (take-while some?)
        (drop-while pred)
        (first)))
-(defn scan [f pred search]
-  (skip f #(not (pred %)) search))
+(defn scan [move pred search]
+  (skip move #(not (pred %)) search))
 
 (declare seen-move)
 (defrecord SeenDFS [search seen]
