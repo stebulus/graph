@@ -25,7 +25,7 @@
 
 (defn scan-across [search pred]
   (->> (iterate across search)
-       (take-while identity)
+       (take-while some?)
        (filter #(pred (current %)))
        (first)))
 (defn scan-children [search pred]
@@ -103,7 +103,7 @@
   this is an appropriate function if you know the graph is a tree.)"
   (->> (stepper search)
        (iterate step)
-       (take-while identity)
+       (take-while some?)
        (filter inbound?)
        (map current)))
 (defn preorder [search]
@@ -119,7 +119,7 @@
   an appropriate function if you know the graph is a tree.)"
   (->> (stepper search)
        (iterate step)
-       (take-while identity)
+       (take-while some?)
        (filter #(not (inbound? %)))
        (map current)))
 (defn postorder [search]
