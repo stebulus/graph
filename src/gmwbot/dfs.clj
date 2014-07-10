@@ -6,22 +6,22 @@
   (up [this])
   (current [this]))
 
-(defrecord StackDFS [stack children]
+(defrecord StackDFS [children stack]
   DepthFirstSearch
   (down [this]
     (when-some [s (seq (children (first (peek stack))))]
-      (StackDFS. (conj stack s) children)))
+      (StackDFS. children (conj stack s))))
   (across [this]
     (when-some [s (next (peek stack))]
-      (StackDFS. (conj (pop stack) s) children)))
+      (StackDFS. children (conj (pop stack) s))))
   (up [this]
     (let [s (pop stack)]
       (when-not (empty? s)
-        (StackDFS. s children))))
+        (StackDFS. children s))))
   (current [this]
     (first (peek stack))))
 (defn dfs [graph start]
-  (StackDFS. [[start]] graph))
+  (StackDFS. graph [[start]]))
 
 (defn skip [move pred search]
   (->> (iterate move search)
