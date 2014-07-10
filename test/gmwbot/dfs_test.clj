@@ -230,41 +230,26 @@
              (df/dfs {:a [:b :c] :c [:b]} :a))))))
 
 (deftest stepping
-  (as-> (df/stepper (df/dfs {:a [:b :c] :c [:b]} :a))
-        stepper
-        (do
-          (is (= :a (df/current stepper)))
-          (is (= true (df/inbound? stepper)))
-          (df/step stepper))
-        (do
-          (is (= :b (df/current stepper)))
-          (is (= true (df/inbound? stepper)))
-          (df/step stepper))
-        (do
-          (is (= :b (df/current stepper)))
-          (is (= false (df/inbound? stepper)))
-          (df/step stepper))
-        (do
-          (is (= :c (df/current stepper)))
-          (is (= true (df/inbound? stepper)))
-          (df/step stepper))
-        (do
-          (is (= :b (df/current stepper)))
-          (is (= true (df/inbound? stepper)))
-          (df/step stepper))
-        (do
-          (is (= :b (df/current stepper)))
-          (is (= false (df/inbound? stepper)))
-          (df/step stepper))
-        (do
-          (is (= :c (df/current stepper)))
-          (is (= false (df/inbound? stepper)))
-          (df/step stepper))
-        (do
-          (is (= :a (df/current stepper)))
-          (is (= false (df/inbound? stepper)))
-          (df/step stepper))
-        (is nil? stepper)))
+  (test-traverse
+    (df/stepper (df/dfs {:a [:b :c] :c [:b]} :a))
+    (juxt df/current df/inbound?)
+    [:a true]
+    (df/step)
+    [:b true]
+    (df/step)
+    [:b false]
+    (df/step)
+    [:c true]
+    (df/step)
+    [:b true]
+    (df/step)
+    [:b false]
+    (df/step)
+    [:c false]
+    (df/step)
+    [:a false]
+    (df/step)
+    nil))
 
 (deftest preorder
   (is (= (df/preorder (df/dfs {:a [:b :c] :b [:x :y]} :a))
