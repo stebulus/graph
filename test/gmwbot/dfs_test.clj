@@ -4,25 +4,26 @@
 
 (defn- test-traverse-clause
   "Helper function for macro test-traverse."
-  ([search-sym node]
+  ([search-sym f node]
     `(do
        (if-let [node# ~node]
-         (is (= node# (df/current ~search-sym)))
+         (is (= node# (~f ~search-sym)))
          (is (nil? ~search-sym)))))
-  ([search-sym node form]
-    (concat (test-traverse-clause search-sym node)
+  ([search-sym f node form]
+    (concat (test-traverse-clause search-sym f node)
             `((~(first form) ~search-sym ~@(rest form))))))
-(defmacro test-traverse [dfs & forms]
-  "Test a sequence of maneuvers in a depth-first search.  The first
-  argument is an expression evaluating to an implementation of
-  gmwbot.dfs/DepthFirstSearch.  The remaining forms describe a sequence
-  of tests, alternating between the node expected from (current dfs)
+(defmacro test-traverse [dfs f & forms]
+  "Test a sequence of maneuvers in a depth-first search.  dfs is an
+  implementation of gmwbot.dfs/DepthFirstSearch; f is a callable taking
+  a DepthFirstSearch as an argument.  The remaining forms describe a
+  sequence of tests, alternating between the expected value of (f dfs)
   and a form into which dfs will be threaded as the first argument;
   the value of the resulting form will be used as the dfs for the
   subsequent forms.  For example,
     (require '[gmwbot.dfs :as df])
     (test-traverse
       (df/dfs {:a [:b]} :a)
+      df/current
       :a
       (df/down)
       :b
@@ -33,12 +34,13 @@
   (let [search-sym (gensym 'search_)]
     `(as-> ~dfs
            ~search-sym
-           ~@(map #(apply test-traverse-clause search-sym %)
+           ~@(map #(apply test-traverse-clause search-sym f %)
                   (partition-all 2 forms)))))
 
 (deftest down
   (test-traverse
     (df/dfs {:a [:b] :b [:c]} :a)
+    df/current
     :a
     (df/down)
     :b
@@ -49,6 +51,7 @@
 (deftest across
   (test-traverse
     (df/dfs {:a [:b :c :d]} :a)
+    df/current
     :a
     (df/down)
     :b
@@ -61,6 +64,7 @@
 (deftest up
   (test-traverse
     (df/dfs {:a [:b] :b [:c]} :a)
+    df/current
     :a
     (df/down)
     :b
@@ -76,6 +80,7 @@
 (deftest scan-across
   (test-traverse
     (df/dfs {:a [:b :c :d :e]} :a)
+    df/current
     :a
     (df/down)
     :b
@@ -88,11 +93,13 @@
 (deftest scan-children
   (test-traverse
     (df/dfs {:a [:b :c :d]} :a)
+    df/current
     :a
     (df/scan-children #(= :c %))
     :c)
   (test-traverse
     (df/dfs {:a [:b :c :d]} :a)
+    df/current
     :a
     (df/scan-children #(= :z %))
     nil))
@@ -101,6 +108,7 @@
   (let [search (df/dfs {:a [:b] :b [:a]} :a)]
     (test-traverse
       search
+      df/current
       :a
       (df/down)
       :b
@@ -110,6 +118,7 @@
       :b)
     (test-traverse
       (df/prune-seen search)
+      df/current
       :a
       (df/down)
       :b
@@ -119,6 +128,7 @@
   (let [search (df/dfs {:a [:a]} :a)]
     (test-traverse
       search
+      df/current
       :a
       (df/down)
       :a
@@ -126,6 +136,7 @@
       :a)
     (test-traverse
       (df/prune-seen search)
+      df/current
       :a
       (df/down)
       nil)))
@@ -133,6 +144,7 @@
   (let [search (df/dfs {:a [:b :c :b] :b []} :a)]
     (test-traverse
       search
+      df/current
       :a
       (df/down)
       :b
@@ -144,6 +156,7 @@
       nil)
     (test-traverse
       (df/prune-seen search)
+      df/current
       :a
       (df/down)
       :b
@@ -155,6 +168,7 @@
   (let [search (df/dfs {:a [:b :c] :b [:c]} :a)]
     (test-traverse
       search
+      df/current
       :a
       (df/down)
       :b
@@ -166,6 +180,7 @@
       :c)
     (test-traverse
       (df/prune-seen search)
+      df/current
       :a
       (df/down)
       :b
@@ -179,6 +194,7 @@
   (let [search (df/dfs {:a [:b :c] :b [] :c [:b]} :a)]
     (test-traverse
       search
+      df/current
       :a
       (df/down)
       :b
@@ -188,6 +204,7 @@
       :b)
     (test-traverse
       (df/prune-seen search)
+      df/current
       :a
       (df/down)
       :b
