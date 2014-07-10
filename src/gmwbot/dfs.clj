@@ -75,24 +75,8 @@
 (defn prune [pred search]
   (PrunedDFS. search pred))
 
-(declare seen-pruned-move)
-(defrecord SeenPrunedDFS [search seen]
-  DepthFirstSearch
-  (down [this]
-    (seen-pruned-move this scan-children))
-  (across [this]
-    (seen-pruned-move this scan-across))
-  (up [this]
-    (when-some [s (up search)]
-      (SeenPrunedDFS. s seen)))
-  (current [this]
-    (current search)))
-(defn- seen-pruned-move [pdfs scan]
-  (when-some [s (scan (.search pdfs)
-                      #(not (contains? (.seen pdfs) %)))]
-    (SeenPrunedDFS. s (conj (.seen pdfs) (current s)))))
 (defn prune-seen [search]
-  (SeenPrunedDFS. search #{(current search)}))
+  (prune seen? (track-seen search)))
 
 (declare fail-on-loop-move)
 (defrecord FailOnLoopDFS [search ancestors]
