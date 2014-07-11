@@ -1,4 +1,4 @@
-(ns gmwbot.dfs
+(ns gmwbot.df
   (:refer-clojure :exclude [reduce])
   (:require [clojure.core :as core]))
 
