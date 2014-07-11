@@ -85,7 +85,9 @@
   [move pred cursor]
   (skip move #(not (pred %)) cursor))
 
-(defn loop? [cursor]
+(defn loop?
+  "Whether the current node was reached by traversing a loop."
+  [cursor]
   (let [curr (current cursor)]
     (->> (iterate up cursor)
          (take-while some?)
