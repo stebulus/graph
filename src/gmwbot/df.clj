@@ -236,10 +236,10 @@
   Calling step will iterate through these states.  To skip the
   descendants of the current node, call step-over.  To skip the
   descendants of the current node and the outbound state of the current
-  node, call across.  To skip any further siblings of the current node
-  (as well as, if inbound, the descendants of the current node and
-  the outbound state of the current node), call up.  Rerooting this
-  cursor yields an inbound cursor."
+  node, call step-over and then step.  To skip any further siblings
+  of the current node (as well as, if inbound, the descendants of the
+  current node and the outbound state of the current node), call up.
+  Rerooting this cursor yields an inbound cursor."
   [cursor]
   (StepperDFC. cursor true))
 (defn inbound?
