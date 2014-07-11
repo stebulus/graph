@@ -299,7 +299,35 @@
   [cursor]
   (postorder-tree (prune-seen cursor)))
 
-(defn reduce [f initf cursor]
+(defn reduce
+  "Reduce the subtree under the current node of cursor.  The result
+  is pretty much the same as
+      (clojure.core/reduce f (initf cursor) child-vals)
+  where child-vals is a lazy sequence of the values of the children of
+  the current node, which are computed in the same way.  For example,
+      (gmwbot.df/reduce + current (dfc {1 [2 3] 2 [4 5]} 1))
+  computes 15 as if by
+      (+ (+ 1 (+ (+ 2 4) 5)) 3)
+  (Since + is associative, this example would be more efficiently
+  computed with
+      (clojure.core/reduce + (preorder ...))
+  because this version doesn't need to maintain its own stack.)
+  Note that initf is called with the cursor as argument, not the
+  node; thus it can take the neighbourhood of the current node
+  into account.  Unlike with clojure.core/reduce, the initial value
+  (function) may not be omitted.  The combining function f is only
+  ever called with two arguments; if a node has no children, its
+  initial value from initf will be used and f will not be called.
+  Short-circuiting occurs in two ways: first, if initf returns a
+  reduced value (see clojure.core/reduced), then the children of
+  the current node will not be visited, nor their values computed;
+  second, if f returns a reduced value, then the following siblings
+  of the current node will not be visited, nor their values computed.
+  There is no support for short-circuiting the entire computation.
+  If the value of a node is found to depend on itself (because there
+  is a loop in the graph being traversed which is not avoided by
+  short-circuiting), an AssertionError will be thrown."
+  [f initf cursor]
   (loop [stack []
          cursor (->> (reroot cursor)
                      (never loop?)
