@@ -246,17 +246,17 @@
   "Whether the current direction of the cursor is inbound.  See stepper."
   [stepc]
   (.inbound stepc))
-(defn step
-  "Advance the stepping cursor.  See stepper."
-  [stepc]
-  (if (inbound? stepc)
-    (or (down stepc) (stepper-move unwrap false stepc))
-    (or (across stepc) (up stepc))))
 (defn step-over
   "Skip the descendants of the current node of the given stepping
   cursor, thus becoming outbound on the current node.  See stepper."
   [stepc]
   (stepper-move unwrap false stepc))
+(defn step
+  "Advance the stepping cursor.  See stepper."
+  [stepc]
+  (if (inbound? stepc)
+    (or (down stepc) (step-over stepc))
+    (or (across stepc) (up stepc))))
 
 (defn preorder-tree
   "Returns a lazy seq of nodes as by a preorder traversal of cursor.
