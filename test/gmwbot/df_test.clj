@@ -4,18 +4,18 @@
 
 (defn- test-traverse-clause
   "Helper function for macro test-traverse."
-  ([search-sym f node]
+  ([cursor-sym f node]
     `(do
        (if-let [node# ~node]
          (do
-           (is (some? ~search-sym))
-           (is (= node# (~f ~search-sym))))
-         (is (nil? ~search-sym)))))
-  ([search-sym f node form]
-    (concat (test-traverse-clause search-sym f node)
-            (list (concat form (list search-sym))))))
+           (is (some? ~cursor-sym))
+           (is (= node# (~f ~cursor-sym))))
+         (is (nil? ~cursor-sym)))))
+  ([cursor-sym f node form]
+    (concat (test-traverse-clause cursor-sym f node)
+            (list (concat form (list cursor-sym))))))
 (defmacro test-traverse [dfs f & forms]
-  "Test a sequence of maneuvers in a depth-first search.  dfs is an
+  "Test a sequence of maneuvers in a depth-first traversal.  dfs is an
   implementation of gmwbot.df/DepthFirstCursor; f is a callable taking
   a DepthFirstCursor as an argument.  The remaining forms describe a
   sequence of tests, alternating between the expected value of (f dfs)
@@ -33,10 +33,10 @@
       nil)
   verifies the initial state, moves down, verifies the resulting state,
   tries to move down again, and verifies that the second move failed."
-  (let [search-sym (gensym 'search_)]
+  (let [cursor-sym (gensym 'cursor_)]
     `(as-> ~dfs
-           ~search-sym
-           ~@(map #(apply test-traverse-clause search-sym f %)
+           ~cursor-sym
+           ~@(map #(apply test-traverse-clause cursor-sym f %)
                   (partition-all 2 forms)))))
 
 (deftest down

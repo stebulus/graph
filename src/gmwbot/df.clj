@@ -65,17 +65,17 @@
 (defn dfs [graph start]
   (StackDFC. graph [[start]]))
 
-(defn skip [move pred search]
-  (->> (iterate move search)
+(defn skip [move pred cursor]
+  (->> (iterate move cursor)
        (take-while some?)
        (drop-while pred)
        (first)))
-(defn scan [move pred search]
-  (skip move #(not (pred %)) search))
+(defn scan [move pred cursor]
+  (skip move #(not (pred %)) cursor))
 
-(defn loop? [search]
-  (let [curr (current search)]
-    (->> (iterate up search)
+(defn loop? [cursor]
+  (let [curr (current cursor)]
+    (->> (iterate up cursor)
          (take-while some?)
          (drop 1)
          (map current)
@@ -85,83 +85,83 @@
   (unwrap [this]))
 
 (declare doeach-move)
-(defrecord DoEachDFC [f search]
+(defrecord DoEachDFC [f cursor]
   Wrapper
-  (unwrap [this] search)
+  (unwrap [this] cursor)
   DepthFirstCursor
   (down [this]
-    (doeach-move down f search))
+    (doeach-move down f cursor))
   (across [this]
-    (doeach-move across f search))
+    (doeach-move across f cursor))
   (up [this]
-    (doeach-move up f search))
+    (doeach-move up f cursor))
   (current [this]
-    (current search))
+    (current cursor))
   (reroot [this]
-    (doeach-move reroot f search)))
-(defn- doeach-move [move f search]
-  (when-let [s (move search)]
+    (doeach-move reroot f cursor)))
+(defn- doeach-move [move f cursor]
+  (when-let [s (move cursor)]
     (f s)
     (DoEachDFC. f s)))
-(defn doeach [f search]
-  (doeach-move identity f search))
+(defn doeach [f cursor]
+  (doeach-move identity f cursor))
 
-(defmacro never [pred search]
-  `(doeach #(assert (not (~pred %))) ~search))
+(defmacro never [pred cursor]
+  `(doeach #(assert (not (~pred %))) ~cursor))
 
 (declare seen-move record-seen)
-(defrecord SeenDFC [seen search]
+(defrecord SeenDFC [seen cursor]
   Wrapper
-  (unwrap [this] search)
+  (unwrap [this] cursor)
   DepthFirstCursor
   (down [this]
-    (seen-move down seen search))
+    (seen-move down seen cursor))
   (across [this]
-    (seen-move across seen search))
+    (seen-move across seen cursor))
   (up [this]
-    (seen-move up seen search))
+    (seen-move up seen cursor))
   (current [this]
-    (current search))
+    (current cursor))
   (reroot [this]
-    (record-seen (reroot search))))
-(defn- seen-move [move seen search]
-  (some->> (move search)
-           (SeenDFC. (conj seen (current search)))))
-(defn record-seen [search]
-  (SeenDFC. #{} search))
+    (record-seen (reroot cursor))))
+(defn- seen-move [move seen cursor]
+  (some->> (move cursor)
+           (SeenDFC. (conj seen (current cursor)))))
+(defn record-seen [cursor]
+  (SeenDFC. #{} cursor))
 (defn seen? [seendfs]
   (contains? (.seen seendfs) (current seendfs)))
 
 (declare prune)
-(defrecord PrunedDFC [pred search]
+(defrecord PrunedDFC [pred cursor]
   Wrapper
-  (unwrap [this] search)
+  (unwrap [this] cursor)
   DepthFirstCursor
   (down [this]
-    (some->> (down search)
+    (some->> (down cursor)
              (skip across pred)
              (PrunedDFC. pred)))
   (across [this]
-    (some->> (across search)
+    (some->> (across cursor)
              (skip across pred)
              (PrunedDFC. pred)))
   (up [this]
-    (some->> (up search)
+    (some->> (up cursor)
              (PrunedDFC. pred)))
   (current [this]
-    (current search))
+    (current cursor))
   (reroot [this]
-    (prune pred (reroot search))))
-(defn prune [pred search]
-  (PrunedDFC. pred search))
+    (prune pred (reroot cursor))))
+(defn prune [pred cursor]
+  (PrunedDFC. pred cursor))
 
-(defn prune-seen [search]
-  (prune seen? (record-seen search)))
+(defn prune-seen [cursor]
+  (prune seen? (record-seen cursor)))
 
 (declare stepper-move stepper)
-(defrecord StepperDFC [search inbound]
+(defrecord StepperDFC [cursor inbound]
   Wrapper
-  (unwrap [this] search)
+  (unwrap [this] cursor)
   DepthFirstCursor
   (down [this]
     (stepper-move this down true))
@@ -170,14 +170,14 @@
   (up [this]
     (stepper-move this up false))
   (current [this]
-    (current search))
+    (current cursor))
   (reroot [this]
-    (stepper (reroot search))))
+    (stepper (reroot cursor))))
 (defn- stepper-move [stepdfs move inbound]
-  (when-let [s (move (.search stepdfs))]
+  (when-let [s (move (.cursor stepdfs))]
     (StepperDFC. s inbound)))
-(defn stepper [search]
-  (StepperDFC. search true))
+(defn stepper [cursor]
+  (StepperDFC. cursor true))
 (defn inbound? [stepdfs]
   (.inbound stepdfs))
 (defn step [stepdfs]
@@ -187,50 +187,50 @@
 (defn step-over [stepdfs]
   (stepper-move stepdfs identity false))
 
-(defn preorder-tree [search]
-  "Returns a lazy seq of nodes as by a preorder traversal of search.
+(defn preorder-tree [cursor]
+  "Returns a lazy seq of nodes as by a preorder traversal of cursor.
   If a node is reachable in more than one way from the initial node,
   it will appear in the seq multiple times; if there is a loop in
   the graph, the seq will get trapped in it.  (As the name suggests,
   this is an appropriate function if you know the graph is a tree.)"
-  (->> (stepper search)
+  (->> (stepper cursor)
        (iterate step)
        (take-while some?)
        (filter inbound?)
        (map current)))
-(defn preorder [search]
-  "Returns a lazy seq of nodes as by a preorder traversal of search.
+(defn preorder [cursor]
+  "Returns a lazy seq of nodes as by a preorder traversal of cursor.
   Skips nodes that have appeared before."
-  (preorder-tree (prune-seen search)))
+  (preorder-tree (prune-seen cursor)))
 
-(defn postorder-tree [search]
-  "Returns a lazy seq of nodes as by a postorder traversal of search.
+(defn postorder-tree [cursor]
+  "Returns a lazy seq of nodes as by a postorder traversal of cursor.
   If a node is reachable in more than one way from the initial node,
   it will appear in the seq multiple times; attempting to realize
   any element of a loop will hang.  (As the name suggests, this is
   an appropriate function if you know the graph is a tree.)"
-  (->> (stepper search)
+  (->> (stepper cursor)
        (iterate step)
        (take-while some?)
        (filter #(not (inbound? %)))
        (map current)))
-(defn postorder [search]
-  "Returns a lazy seq of nodes as by a postorder traversal of search.
+(defn postorder [cursor]
+  "Returns a lazy seq of nodes as by a postorder traversal of cursor.
   Skips nodes that have appeared before."
-  (postorder-tree (prune-seen search)))
+  (postorder-tree (prune-seen cursor)))
 
-(defn reduce [f initf search]
+(defn reduce [f initf cursor]
   (loop [stack []
-         search (->> (reroot search)
+         cursor (->> (reroot cursor)
                      (never loop?)
                      (stepper))]
-    (if (inbound? search)
-      (let [init (initf search)]
+    (if (inbound? cursor)
+      (let [init (initf cursor)]
         (if (reduced? init)
           (recur (conj stack @init)
-                 (step-over search))
+                 (step-over cursor))
           (recur (conj stack init)
-                 (step search))))
+                 (step cursor))))
       (let [top (peek stack)
             stack (pop stack)]
         (if (empty? stack)
@@ -238,6 +238,6 @@
           (let [val (f (peek stack) top)]
             (if (reduced? val)
               (recur (conj (pop stack) @val)
-                     (up search))
+                     (up cursor))
               (recur (conj (pop stack) val)
-                     (step search)))))))))
+                     (step cursor)))))))))
