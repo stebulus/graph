@@ -62,7 +62,11 @@
     (first (peek stack)))
   (reroot [this]
     (dfs children (current this))))
-(defn dfs [graph start]
+(defn dfs
+  "A depth-first cursor in graph, starting at node start.  The graph
+  is a callable taking a node as an argument and returning a seq of
+  that node's children."
+  [graph start]
   (StackDFC. graph [[start]]))
 
 (defn skip [move pred cursor]
