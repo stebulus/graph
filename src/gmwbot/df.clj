@@ -18,7 +18,10 @@
   will succeed, because A would normally be visited again after its
   children had been traversed, but the move down from A again might
   fail.)  Note that, consequently, if we retain only a reference to
-  the cursor at C, the nodes B, X, and Y could be garbage-collected."
+  the cursor at C, the nodes B, X, and Y could be garbage-collected.
+  All implementations of navigation functions are encouraged to be
+  as lazy as possible; for example, the children of a node should if
+  possible not be computed until down is called."
   (down [this]
     "Returns a cursor at the first (leftmost) child of the current node,
     or nil if the current node has no children.")
