@@ -43,7 +43,7 @@
     by reroot should usually be the same as a newly constructed one
     at the same location."))
 
-(declare dfs)
+(declare dfc)
 (defrecord StackDFC [children stack]
   DepthFirstCursor
   (down [this]
@@ -61,8 +61,8 @@
   (current [this]
     (first (peek stack)))
   (reroot [this]
-    (dfs children (current this))))
-(defn dfs
+    (dfc children (current this))))
+(defn dfc
   "A depth-first cursor in graph, starting at node start.  The graph
   is a callable taking a node as an argument and returning a seq of
   that node's children."
@@ -133,8 +133,8 @@
            (SeenDFC. (conj seen (current cursor)))))
 (defn record-seen [cursor]
   (SeenDFC. #{} cursor))
-(defn seen? [seendfs]
-  (contains? (.seen seendfs) (current seendfs)))
+(defn seen? [seenc]
+  (contains? (.seen seenc) (current seenc)))
 
 (declare prune)
 (defrecord PrunedDFC [pred cursor]
@@ -177,19 +177,19 @@
     (current cursor))
   (reroot [this]
     (stepper (reroot cursor))))
-(defn- stepper-move [stepdfs move inbound]
-  (when-let [s (move (.cursor stepdfs))]
+(defn- stepper-move [stepc move inbound]
+  (when-let [s (move (.cursor stepc))]
     (StepperDFC. s inbound)))
 (defn stepper [cursor]
   (StepperDFC. cursor true))
-(defn inbound? [stepdfs]
-  (.inbound stepdfs))
-(defn step [stepdfs]
-  (if (inbound? stepdfs)
-    (or (down stepdfs) (stepper-move stepdfs identity false))
-    (or (across stepdfs) (up stepdfs))))
-(defn step-over [stepdfs]
-  (stepper-move stepdfs identity false))
+(defn inbound? [stepc]
+  (.inbound stepc))
+(defn step [stepc]
+  (if (inbound? stepc)
+    (or (down stepc) (stepper-move stepc identity false))
+    (or (across stepc) (up stepc))))
+(defn step-over [stepc]
+  (stepper-move stepc identity false))
 
 (defn preorder-tree [cursor]
   "Returns a lazy seq of nodes as by a preorder traversal of cursor.

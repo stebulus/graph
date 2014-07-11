@@ -14,17 +14,17 @@
   ([cursor-sym f node form]
     (concat (test-traverse-clause cursor-sym f node)
             (list (concat form (list cursor-sym))))))
-(defmacro test-traverse [dfs f & forms]
-  "Test a sequence of maneuvers in a depth-first traversal.  dfs is an
+(defmacro test-traverse [dfc f & forms]
+  "Test a sequence of maneuvers in a depth-first traversal.  dfc is an
   implementation of gmwbot.df/DepthFirstCursor; f is a callable taking
   a DepthFirstCursor as an argument.  The remaining forms describe a
-  sequence of tests, alternating between the expected value of (f dfs)
-  and a form into which dfs will be threaded as the last argument;
-  the value of the resulting form will be used as the dfs for the
+  sequence of tests, alternating between the expected value of (f dfc)
+  and a form into which dfc will be threaded as the last argument;
+  the value of the resulting form will be used as the dfc for the
   subsequent forms.  For example,
     (require '[gmwbot.df :as df])
     (test-traverse
-      (df/dfs {:a [:b]} :a)
+      (df/dfc {:a [:b]} :a)
       df/current
       :a
       (df/down)
@@ -34,14 +34,14 @@
   verifies the initial state, moves down, verifies the resulting state,
   tries to move down again, and verifies that the second move failed."
   (let [cursor-sym (gensym 'cursor_)]
-    `(as-> ~dfs
+    `(as-> ~dfc
            ~cursor-sym
            ~@(map #(apply test-traverse-clause cursor-sym f %)
                   (partition-all 2 forms)))))
 
 (deftest down
   (test-traverse
-    (df/dfs {:a [:b] :b [:c]} :a)
+    (df/dfc {:a [:b] :b [:c]} :a)
     df/current
     :a
     (df/down)
@@ -52,7 +52,7 @@
     nil))
 (deftest across
   (test-traverse
-    (df/dfs {:a [:b :c :d]} :a)
+    (df/dfc {:a [:b :c :d]} :a)
     df/current
     :a
     (df/down)
@@ -65,7 +65,7 @@
     nil))
 (deftest up
   (test-traverse
-    (df/dfs {:a [:b] :b [:c]} :a)
+    (df/dfc {:a [:b] :b [:c]} :a)
     df/current
     :a
     (df/down)
@@ -81,7 +81,7 @@
 
 (deftest reroot-up
   (test-traverse
-    (df/dfs {:a [:b :c] :b [:x :y]} :a)
+    (df/dfc {:a [:b :c] :b [:x :y]} :a)
     df/current
     :a
     (df/down)
@@ -92,7 +92,7 @@
     nil))
 (deftest reroot-across
   (test-traverse
-    (df/dfs {:a [:b :c] :b [:x :y]} :a)
+    (df/dfc {:a [:b :c] :b [:x :y]} :a)
     df/current
     :a
     (df/down)
@@ -103,14 +103,14 @@
     nil))
 (deftest reroot-preorder
   (is (= [:b :x :y]
-         (->> (df/dfs {:a [:b :c] :b [:x :y]} :a)
+         (->> (df/dfc {:a [:b :c] :b [:x :y]} :a)
               (df/down)
               (df/reroot)
               (df/preorder-tree)))))
 
 (deftest scan-across
   (test-traverse
-    (df/dfs {:a [:b :c :d :e]} :a)
+    (df/dfc {:a [:b :c :d :e]} :a)
     df/current
     :a
     (df/down)
@@ -123,7 +123,7 @@
     nil))
 (deftest skip-across
   (test-traverse
-    (df/dfs {:a [:b :c :d :e]} :a)
+    (df/dfc {:a [:b :c :d :e]} :a)
     df/current
     :a
     (df/down)
@@ -137,7 +137,7 @@
 
 (deftest loop?
   (test-traverse
-    (df/dfs {:a [:b :c] :b [:x :y] :c [:a]} :a)
+    (df/dfc {:a [:b :c] :b [:x :y] :c [:a]} :a)
     (juxt df/current df/loop?)
     [:a nil]
     (df/down)
@@ -155,9 +155,9 @@
   (is (= [:a [:b [:x] [:y]] [:c]]
          (df/reduce conj
                     (fn [x] [(df/current x)])
-                    (df/dfs {:a [:b :c] :b [:x :y]} :a)))))
+                    (df/dfc {:a [:b :c] :b [:x :y]} :a)))))
 (deftest dfreduce-shortcircuit-children
-  (let [nox (->> (df/dfs {:a [:b :c] :b [:x :y] :c [:q]} :a)
+  (let [nox (->> (df/dfc {:a [:b :c] :b [:x :y] :c [:q]} :a)
                  (df/never #(= :x (df/current %))))]
     (is (thrown? AssertionError (df/down (df/down nox))))
     (is (thrown? AssertionError
@@ -173,7 +173,7 @@
                               [curr])))
                       nox)))))
 (deftest dfreduce-shortcircuit-siblings
-  (let [nox (->> (df/dfs {:a [:b :c :x] :b [:p] :x [:q :r]} :a)
+  (let [nox (->> (df/dfc {:a [:b :c :x] :b [:p] :x [:q :r]} :a)
                  (df/never #(= :x (df/current %))))]
     (is (thrown? AssertionError
                  (->> (df/down nox)
@@ -196,7 +196,7 @@
     (test-traverse
       (df/doeach
         #(swap! x conj (df/current %))
-        (df/dfs {:a [:b :c] :b [:x :y]} :a))
+        (df/dfc {:a [:b :c] :b [:x :y]} :a))
       (fn [s] @x)
       [:a]
       (df/down)
@@ -207,16 +207,16 @@
       [:a :b :c :a])))
 
 (deftest never-down
-  (let [verge (->> (df/dfs {:a [:b :c] :b [:x :y]} :a)
+  (let [verge (->> (df/dfc {:a [:b :c] :b [:x :y]} :a)
                    (df/never #(= :b (df/current %))))]
     (is (thrown? AssertionError (df/down verge)))))
 (deftest never-across
-  (let [verge (->> (df/dfs {:a [:b :c] :b [:x :y]} :a)
+  (let [verge (->> (df/dfc {:a [:b :c] :b [:x :y]} :a)
                    (df/never #(= :c (df/current %)))
                    (df/down))]
     (is (thrown? AssertionError (df/across verge)))))
 (deftest never-up
-  (let [verge (->> (df/dfs {:a [:b :c] :b [:x :y]} :a)
+  (let [verge (->> (df/dfc {:a [:b :c] :b [:x :y]} :a)
                    (df/down)
                    (df/down)
                    (df/never #(= :b (df/current %)))
@@ -225,22 +225,22 @@
 (deftest never-immediate
   (is (thrown? AssertionError
                (df/never #(= :a (df/current %))
-                         (df/dfs {:a [:b]} :a)))))
+                         (df/dfc {:a [:b]} :a)))))
 (deftest never-reroot
-  (let [atb (->> (df/dfs {:a [:b :c] :b [:x :y] :c [:bad]} :a)
+  (let [atb (->> (df/dfc {:a [:b :c] :b [:x :y] :c [:bad]} :a)
                  (df/never #(= :bad (df/current %)))
                  (df/down))]
     (is (thrown? AssertionError (dorun (df/preorder-tree atb))))
     (is (= [:b :x :y] (df/preorder-tree (df/reroot atb))))))
 (deftest never-reroot-immediate
-  (let [verge (->> (df/dfs {:a [:b :c]} :a)
+  (let [verge (->> (df/dfc {:a [:b :c]} :a)
                    (df/down)
                    (df/never #(nil? (df/up %))))]
     (is (thrown? AssertionError (df/reroot verge)))))
 
 (deftest seen-parent
   (test-traverse
-    (df/record-seen (df/dfs {:a [:b] :b [:a]} :a))
+    (df/record-seen (df/dfc {:a [:b] :b [:a]} :a))
     (juxt df/current df/seen?)
     [:a false]
     (df/down)
@@ -249,14 +249,14 @@
     [:a true]))
 (deftest seen-self
   (test-traverse
-    (df/record-seen (df/dfs {:a [:a]} :a))
+    (df/record-seen (df/dfc {:a [:a]} :a))
     (juxt df/current df/seen?)
     [:a false]
     (df/down)
     [:a true]))
 (deftest seen-sibling
   (test-traverse
-    (df/record-seen (df/dfs {:a [:b :b]} :a))
+    (df/record-seen (df/dfc {:a [:b :b]} :a))
     (juxt df/current df/seen?)
     [:a false]
     (df/down)
@@ -265,7 +265,7 @@
     [:b true]))
 (deftest seen-niece
   (test-traverse
-    (df/record-seen (df/dfs {:a [:b :c] :b [:c]} :a))
+    (df/record-seen (df/dfc {:a [:b :c] :b [:c]} :a))
     (juxt df/current df/seen?)
     [:a false]
     (df/down)
@@ -278,7 +278,7 @@
     [:c true]))
 (deftest seen-aunt
   (test-traverse
-    (df/record-seen (df/dfs {:a [:b :c] :c [:b]} :a))
+    (df/record-seen (df/dfc {:a [:b :c] :c [:b]} :a))
     (juxt df/current df/seen?)
     [:a false]
     (df/down)
@@ -289,7 +289,7 @@
     [:b true]))
 (deftest seen-cousin
   (test-traverse
-    (df/record-seen (df/dfs {:a [:b :c] :b [:x] :c [:x]} :a))
+    (df/record-seen (df/dfc {:a [:b :c] :b [:x] :c [:x]} :a))
     (juxt df/current df/seen?)
     [:a false]
     (df/down)
@@ -303,7 +303,7 @@
     (df/down)
     [:x true]))
 (deftest seen-reroot
-  (let [atc (->> (df/dfs {:a [:b :c] :b [:x :y] :c [:x]} :a)
+  (let [atc (->> (df/dfc {:a [:b :c] :b [:x :y] :c [:x]} :a)
                  (df/record-seen)
                  (df/stepper)
                  (df/scan df/step #(= :c (df/current %)))
@@ -314,14 +314,14 @@
 (deftest prune-down
   (test-traverse
     (df/prune #(= :b (df/current %))
-              (df/dfs {:a [:b :c] :b [:x :y]} :a))
+              (df/dfc {:a [:b :c] :b [:x :y]} :a))
     df/current
     :a
     (df/down)
     :c)
   (test-traverse
     (df/prune #(= :b (df/current %))
-              (df/dfs {:a [:b :b] :b [:x :y]} :a))
+              (df/dfc {:a [:b :b] :b [:x :y]} :a))
     df/current
     :a
     (df/down)
@@ -329,7 +329,7 @@
 (deftest prune-across
   (test-traverse
     (df/prune #(= :c (df/current %))
-              (df/dfs {:a [:b :c :d] :c [:x :y]} :a))
+              (df/dfc {:a [:b :c :d] :c [:x :y]} :a))
     df/current
     :a
     (df/down)
@@ -338,7 +338,7 @@
     :d)
   (test-traverse
     (df/prune #(= :c (df/current %))
-              (df/dfs {:a [:b :c] :c [:x :y]} :a))
+              (df/dfc {:a [:b :c] :c [:x :y]} :a))
     df/current
     :a
     (df/down)
@@ -348,7 +348,7 @@
 (deftest prune-up
   (test-traverse
     (df/prune #(= :c (df/current %))
-              (-> (df/dfs {:a [:b :c :d] :c [:x :c :y]} :a)
+              (-> (df/dfc {:a [:b :c :d] :c [:x :c :y]} :a)
                   (df/down)
                   (df/across)
                   (df/down)))
@@ -363,7 +363,7 @@
 
 (deftest stepping
   (test-traverse
-    (df/stepper (df/dfs {:a [:b :c] :c [:b]} :a))
+    (df/stepper (df/dfc {:a [:b :c] :c [:b]} :a))
     (juxt df/current df/inbound?)
     [:a true]
     (df/step)
@@ -384,21 +384,21 @@
     nil))
 
 (deftest preorder
-  (is (= (df/preorder (df/dfs {:a [:b :c] :b [:x :y]} :a))
+  (is (= (df/preorder (df/dfc {:a [:b :c] :b [:x :y]} :a))
          [:a :b :x :y :c])))
 (deftest preorder-pruned
-  (is (= (df/preorder (df/dfs {:a [:b :c] :b [:x :a :y] :c [:x]} :a))
+  (is (= (df/preorder (df/dfc {:a [:b :c] :b [:x :a :y] :c [:x]} :a))
          [:a :b :x :y :c])))
 (deftest preorder-tree
-  (is (= (df/preorder-tree (df/dfs {:a [:b :c] :b [:x :y] :c [:x]} :a))
+  (is (= (df/preorder-tree (df/dfc {:a [:b :c] :b [:x :y] :c [:x]} :a))
          [:a :b :x :y :c :x])))
 
 (deftest postorder
-  (is (= (df/postorder (df/dfs {:a [:b :c] :b [:x :y]} :a))
+  (is (= (df/postorder (df/dfc {:a [:b :c] :b [:x :y]} :a))
          [:x :y :b :c :a])))
 (deftest postorder-pruned
-  (is (= (df/postorder (df/dfs {:a [:b :c] :b [:x :a :y] :c [:x]} :a))
+  (is (= (df/postorder (df/dfc {:a [:b :c] :b [:x :a :y] :c [:x]} :a))
          [:x :y :b :c :a])))
 (deftest postorder-tree
-  (is (= (df/postorder-tree (df/dfs {:a [:b :c] :b [:x :y] :c [:x]} :a))
+  (is (= (df/postorder-tree (df/dfc {:a [:b :c] :b [:x :y] :c [:x]} :a))
          [:x :y :b :x :c :a])))
