@@ -34,11 +34,12 @@
   (current [this]
     "The current node.")
   (reroot [this]
-    "Returns a cursor at the current node, but which cannot move up.
-    Any state associated with the path by which this cursor reached
-    the current node is omitted from the new cursor.  A caller can use
-    this function to declare that it has no further interest in the
-    ancestors of the current node (and so, for example, they could
+    "Returns a cursor at the current node, but which cannot move
+    up or across from that node.  Any state associated with the
+    path by which this cursor reached the current node is omitted
+    from the new cursor.  A caller can use this function to declare
+    that it has no further interest in the ancestors or following
+    siblings of the current node (and so, for example, they could
     be garbage-collected).  For least surprise, the cursor obtained
     by reroot should usually be the same as a newly constructed one
     at the same location."))
