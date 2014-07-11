@@ -259,7 +259,9 @@
   If a node is reachable in more than one way from the initial node,
   it will appear in the seq multiple times; if there is a loop in
   the graph, the seq will get trapped in it.  (As the name suggests,
-  this is an appropriate function if you know the graph is a tree.)"
+  this is an appropriate function if you know the graph is a tree.)
+  The traversal is not constrained to the subtree rooted at the
+  current node; for that, use (preorder-tree (reroot cursor))."
   (->> (stepper cursor)
        (iterate step)
        (take-while some?)
@@ -267,15 +269,19 @@
        (map current)))
 (defn preorder [cursor]
   "Returns a lazy seq of nodes as by a preorder traversal of cursor.
-  Skips nodes that have appeared before."
+  Skips nodes that have appeared before.  The traversal is not
+  constrained to the subtree rooted at the current node; for that,
+  use (preorder (reroot cursor))."
   (preorder-tree (prune-seen cursor)))
 
 (defn postorder-tree [cursor]
   "Returns a lazy seq of nodes as by a postorder traversal of cursor.
   If a node is reachable in more than one way from the initial node,
   it will appear in the seq multiple times; attempting to realize
-  any element of a loop will hang.  (As the name suggests, this is
-  an appropriate function if you know the graph is a tree.)"
+  any element of a loop will hang.  (As the name suggests, this
+  is an appropriate function if you know the graph is a tree.)
+  The traversal is not constrained to the subtree rooted at the
+  current node; for that, use (postorder-tree (reroot cursor))."
   (->> (stepper cursor)
        (iterate step)
        (take-while some?)
@@ -283,7 +289,9 @@
        (map current)))
 (defn postorder [cursor]
   "Returns a lazy seq of nodes as by a postorder traversal of cursor.
-  Skips nodes that have appeared before."
+  Skips nodes that have appeared before.  The traversal is not
+  constrained to the subtree rooted at the current node; for that,
+  use (postorder (reroot cursor))."
   (postorder-tree (prune-seen cursor)))
 
 (defn reduce [f initf cursor]
