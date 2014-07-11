@@ -69,12 +69,20 @@
   [graph start]
   (StackDFC. graph [[start]]))
 
-(defn skip [move pred cursor]
+(defn skip
+  "Iteratively call move on cursor as long as the cursor satisfies
+  pred.  Returns the first cursor that doesn't satisfy pred, or nil
+  if none is found."
+  [move pred cursor]
   (->> (iterate move cursor)
        (take-while some?)
        (drop-while pred)
        (first)))
-(defn scan [move pred cursor]
+(defn scan
+  "Iteratively call move on cursor until the cursor satisfies pred.
+  Returns the first cursor that satisfies pred, or nil if none
+  is found."
+  [move pred cursor]
   (skip move #(not (pred %)) cursor))
 
 (defn loop? [cursor]
