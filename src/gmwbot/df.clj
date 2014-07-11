@@ -96,7 +96,8 @@
          (some #(= curr %)))))
 
 (defprotocol Wrapper
-  (unwrap [this]))
+  "An object which wraps another object."
+  (unwrap [this] "Returns the object wrapped by this one."))
 
 (declare doeach-move)
 (defrecord DoEachDFC [f cursor]
