@@ -72,8 +72,8 @@
 (defn doeach [f search]
   (doeach-move identity f search))
 
-(defn never [pred search]
-  (doeach #(assert (not (pred %))) search))
+(defmacro never [pred search]
+  `(doeach #(assert (not (~pred %))) ~search))
 
 (declare seen-move record-seen)
 (defrecord SeenDFS [seen search]
