@@ -212,15 +212,46 @@
 (defn- stepper-move [stepc move inbound]
   (when-let [s (move (.cursor stepc))]
     (StepperDFC. s inbound)))
-(defn stepper [cursor]
+(defn stepper
+  "A cursor wrapper which keeps track of the current 'direction'.
+  In a depth-first traversal, a node is typically visited twice,
+  once 'inbound', before its descendants, and once 'outbound', after
+  its descendants; (inbound? c) reports the direction, and (step c)
+  returns a cursor for the next state of the traversal.  For example,
+  consider the graph
+        A -> B C
+  (that is, a graph with nodes A, B, C, with arcs from A to B and
+  to C).  The sequence of stepping cursor states for traversing this
+  graph from A is
+        A inbound
+        B inbound
+        B outbound
+        C inbound
+        C outbound
+        A outbound
+  Calling step will iterate through these states.  To skip the
+  descendants of the current node, call step-over.  To skip the
+  descendants of the current node and the outbound state of the current
+  node, call across.  To skip any further siblings of the current node
+  (as well as, if inbound, the descendants of the current node and
+  the outbound state of the current node), call up.  Rerooting this
+  cursor yields an inbound cursor."
+  [cursor]
   (StepperDFC. cursor true))
-(defn inbound? [stepc]
+(defn inbound?
+  "Whether the current direction of the cursor is inbound.  See stepper."
+  [stepc]
   (.inbound stepc))
-(defn step [stepc]
+(defn step
+  "Advance the stepping cursor.  See stepper."
+  [stepc]
   (if (inbound? stepc)
     (or (down stepc) (stepper-move stepc identity false))
     (or (across stepc) (up stepc))))
-(defn step-over [stepc]
+(defn step-over
+  "Skip the descendants of the current node of the given stepping
+  cursor, thus becoming outbound on the current node.  See stepper."
+  [stepc]
   (stepper-move stepc identity false))
 
 (defn preorder-tree [cursor]
