@@ -47,7 +47,7 @@
 (defrecord StackDFC [children stack]
   DepthFirstCursor
   (down [this]
-    (some->> (seq (children (first (peek stack))))
+    (some->> (seq (children (current this)))
              (conj stack)
              (StackDFC. children)))
   (across [this]
