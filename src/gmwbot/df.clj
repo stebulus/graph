@@ -254,7 +254,7 @@
   [stepc]
   (stepper-move stepc identity false))
 
-(defn preorder-tree [cursor]
+(defn preorder-tree
   "Returns a lazy seq of nodes as by a preorder traversal of cursor.
   If a node is reachable in more than one way from the initial node,
   it will appear in the seq multiple times; if there is a loop in
@@ -262,19 +262,21 @@
   this is an appropriate function if you know the graph is a tree.)
   The traversal is not constrained to the subtree rooted at the
   current node; for that, use (preorder-tree (reroot cursor))."
+  [cursor]
   (->> (stepper cursor)
        (iterate step)
        (take-while some?)
        (filter inbound?)
        (map current)))
-(defn preorder [cursor]
+(defn preorder
   "Returns a lazy seq of nodes as by a preorder traversal of cursor.
   Skips nodes that have appeared before.  The traversal is not
   constrained to the subtree rooted at the current node; for that,
   use (preorder (reroot cursor))."
+  [cursor]
   (preorder-tree (prune-seen cursor)))
 
-(defn postorder-tree [cursor]
+(defn postorder-tree
   "Returns a lazy seq of nodes as by a postorder traversal of cursor.
   If a node is reachable in more than one way from the initial node,
   it will appear in the seq multiple times; attempting to realize
@@ -282,16 +284,18 @@
   is an appropriate function if you know the graph is a tree.)
   The traversal is not constrained to the subtree rooted at the
   current node; for that, use (postorder-tree (reroot cursor))."
+  [cursor]
   (->> (stepper cursor)
        (iterate step)
        (take-while some?)
        (filter #(not (inbound? %)))
        (map current)))
-(defn postorder [cursor]
+(defn postorder
   "Returns a lazy seq of nodes as by a postorder traversal of cursor.
   Skips nodes that have appeared before.  The traversal is not
   constrained to the subtree rooted at the current node; for that,
   use (postorder (reroot cursor))."
+  [cursor]
   (postorder-tree (prune-seen cursor)))
 
 (defn reduce [f initf cursor]
