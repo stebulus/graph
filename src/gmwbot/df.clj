@@ -2,7 +2,7 @@
   (:refer-clojure :exclude [reduce])
   (:require [clojure.core :as core]))
 
-(defprotocol DepthFirstSearch
+(defprotocol DepthFirstCursor
   "A cursor for a depth-first traversal of a directed graph.  These
   cursors are immutable; navigation functions return a new cursor,
   and the old cursor remains valid.  A cursor is only guaranteed
@@ -44,26 +44,26 @@
     at the same location."))
 
 (declare dfs)
-(defrecord StackDFS [children stack]
-  DepthFirstSearch
+(defrecord StackDFC [children stack]
+  DepthFirstCursor
   (down [this]
     (some->> (seq (children (first (peek stack))))
              (conj stack)
-             (StackDFS. children)))
+             (StackDFC. children)))
   (across [this]
     (some->> (next (peek stack))
              (conj (pop stack))
-             (StackDFS. children)))
+             (StackDFC. children)))
   (up [this]
     (let [s (pop stack)]
       (when-not (empty? s)
-        (StackDFS. children s))))
+        (StackDFC. children s))))
   (current [this]
     (first (peek stack)))
   (reroot [this]
     (dfs children (current this))))
 (defn dfs [graph start]
-  (StackDFS. graph [[start]]))
+  (StackDFC. graph [[start]]))
 
 (defn skip [move pred search]
   (->> (iterate move search)
@@ -85,10 +85,10 @@
   (unwrap [this]))
 
 (declare doeach-move)
-(defrecord DoEachDFS [f search]
+(defrecord DoEachDFC [f search]
   Wrapper
   (unwrap [this] search)
-  DepthFirstSearch
+  DepthFirstCursor
   (down [this]
     (doeach-move down f search))
   (across [this]
@@ -102,7 +102,7 @@
 (defn- doeach-move [move f search]
   (when-let [s (move search)]
     (f s)
-    (DoEachDFS. f s)))
+    (DoEachDFC. f s)))
 (defn doeach [f search]
   (doeach-move identity f search))
 
@@ -110,10 +110,10 @@
   `(doeach #(assert (not (~pred %))) ~search))
 
 (declare seen-move record-seen)
-(defrecord SeenDFS [seen search]
+(defrecord SeenDFC [seen search]
   Wrapper
   (unwrap [this] search)
-  DepthFirstSearch
+  DepthFirstCursor
   (down [this]
     (seen-move down seen search))
   (across [this]
@@ -126,43 +126,43 @@
     (record-seen (reroot search))))
 (defn- seen-move [move seen search]
   (some->> (move search)
-           (SeenDFS. (conj seen (current search)))))
+           (SeenDFC. (conj seen (current search)))))
 (defn record-seen [search]
-  (SeenDFS. #{} search))
+  (SeenDFC. #{} search))
 (defn seen? [seendfs]
   (contains? (.seen seendfs) (current seendfs)))
 
 (declare prune)
-(defrecord PrunedDFS [pred search]
+(defrecord PrunedDFC [pred search]
   Wrapper
   (unwrap [this] search)
-  DepthFirstSearch
+  DepthFirstCursor
   (down [this]
     (some->> (down search)
              (skip across pred)
-             (PrunedDFS. pred)))
+             (PrunedDFC. pred)))
   (across [this]
     (some->> (across search)
              (skip across pred)
-             (PrunedDFS. pred)))
+             (PrunedDFC. pred)))
   (up [this]
     (some->> (up search)
-             (PrunedDFS. pred)))
+             (PrunedDFC. pred)))
   (current [this]
     (current search))
   (reroot [this]
     (prune pred (reroot search))))
 (defn prune [pred search]
-  (PrunedDFS. pred search))
+  (PrunedDFC. pred search))
 
 (defn prune-seen [search]
   (prune seen? (record-seen search)))
 
 (declare stepper-move stepper)
-(defrecord StepperDFS [search inbound]
+(defrecord StepperDFC [search inbound]
   Wrapper
   (unwrap [this] search)
-  DepthFirstSearch
+  DepthFirstCursor
   (down [this]
     (stepper-move this down true))
   (across [this]
@@ -175,9 +175,9 @@
     (stepper (reroot search))))
 (defn- stepper-move [stepdfs move inbound]
   (when-let [s (move (.search stepdfs))]
-    (StepperDFS. s inbound)))
+    (StepperDFC. s inbound)))
 (defn stepper [search]
-  (StepperDFS. search true))
+  (StepperDFC. search true))
 (defn inbound? [stepdfs]
   (.inbound stepdfs))
 (defn step [stepdfs]

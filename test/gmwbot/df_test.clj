@@ -16,8 +16,8 @@
             (list (concat form (list search-sym))))))
 (defmacro test-traverse [dfs f & forms]
   "Test a sequence of maneuvers in a depth-first search.  dfs is an
-  implementation of gmwbot.df/DepthFirstSearch; f is a callable taking
-  a DepthFirstSearch as an argument.  The remaining forms describe a
+  implementation of gmwbot.df/DepthFirstCursor; f is a callable taking
+  a DepthFirstCursor as an argument.  The remaining forms describe a
   sequence of tests, alternating between the expected value of (f dfs)
   and a form into which dfs will be threaded as the last argument;
   the value of the resulting form will be used as the dfs for the
