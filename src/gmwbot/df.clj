@@ -204,17 +204,17 @@
   (unwrap [this] cursor)
   DepthFirstCursor
   (down [this]
-    (stepper-move this down true))
+    (stepper-move down true cursor))
   (across [this]
-    (stepper-move this across true))
+    (stepper-move across true cursor))
   (up [this]
-    (stepper-move this up false))
+    (stepper-move up false cursor))
   (current [this]
     (current cursor))
   (reroot [this]
     (stepper (reroot cursor))))
-(defn- stepper-move [stepc move inbound]
-  (when-let [s (move (.cursor stepc))]
+(defn- stepper-move [move inbound cursor]
+  (when-let [s (move cursor)]
     (StepperDFC. s inbound)))
 (defn stepper
   "A cursor wrapper which keeps track of the current 'direction'.
@@ -250,13 +250,13 @@
   "Advance the stepping cursor.  See stepper."
   [stepc]
   (if (inbound? stepc)
-    (or (down stepc) (stepper-move stepc identity false))
+    (or (down stepc) (stepper-move unwrap false stepc))
     (or (across stepc) (up stepc))))
 (defn step-over
   "Skip the descendants of the current node of the given stepping
   cursor, thus becoming outbound on the current node.  See stepper."
   [stepc]
-  (stepper-move stepc identity false))
+  (stepper-move unwrap false stepc))
 
 (defn preorder-tree
   "Returns a lazy seq of nodes as by a preorder traversal of cursor.
