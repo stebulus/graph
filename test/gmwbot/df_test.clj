@@ -190,6 +190,27 @@
                               newL)))
                       (fn [x] [(df/current x)])
                       nox)))))
+(deftest dfreduce-loop
+  (is (thrown? AssertionError
+               (df/reduce +
+                          df/current
+                          (df/dfc {1 [2 3] 2 [4 5] 3 [4 1]} 1))))
+  (is (= (+ 1 2 3 4 5)
+         (df/reduce +
+                    (fn [cursor]
+                        (let [curr (df/current cursor)]
+                          (if (= 3 curr)
+                            (reduced curr)
+                            curr)))
+                    (df/dfc {1 [2 3] 2 [4 5] 3 [4 1]} 1))))
+  (is (= (+ 1 2 3 4 5 7)
+         (df/reduce (fn [x y]
+                        (let [val (+ x y)]
+                          (if (= 7 y)
+                            (reduced val)
+                            val)))
+                    df/current
+                    (df/dfc {1 [2 3] 2 [4 5] 3 [7 1]} 1)))))
 
 (deftest doeach
   (let [x (atom [])]
