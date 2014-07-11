@@ -179,7 +179,14 @@
     (current cursor))
   (reroot [this]
     (prune pred (reroot cursor))))
-(defn prune [pred cursor]
+(defn prune
+  "A cursor wrapper which omits cursors satisfying pred (and therefore
+  also skips the subtrees under them).  Note that pred takes the
+  cursor as an argument, not the node; thus pred may depend on the
+  current node's neighbourhood.  For example, if pred is
+  #(some->> (down %) (current) (= :x)), then nodes which have :x as
+  their first child will be pruned."
+  [pred cursor]
   (PrunedDFC. pred cursor))
 
 (defn prune-seen [cursor]
