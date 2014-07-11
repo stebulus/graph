@@ -189,7 +189,9 @@
   [pred cursor]
   (PrunedDFC. pred cursor))
 
-(defn prune-seen [cursor]
+(defn prune-seen
+  "A cursor wrapper which omits nodes already seen."
+  [cursor]
   (prune seen? (record-seen cursor)))
 
 (declare stepper-move stepper)
