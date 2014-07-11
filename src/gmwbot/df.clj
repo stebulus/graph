@@ -331,6 +331,10 @@
   is a loop in the graph being traversed which is not avoided by
   short-circuiting), an AssertionError will be thrown."
   [f initf cursor]
+  ; We could implement this by calling core/reduce as in the docstring,
+  ; but it'd be a bit tricky to wrangle the cursors correctly.
+  ; The following implementation only ever handles one cursor at a
+  ; time, and simply advances it from node to node as usual.
   (loop [stack []
          cursor (->> (reroot cursor)
                      (never loop?)
