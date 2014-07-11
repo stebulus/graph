@@ -212,6 +212,61 @@
                     df/current
                     (df/dfc {1 [2 3] 2 [4 5] 3 [7 1]} 1)))))
 
+(deftest memo-reduce
+  (is (= {1 15, 2 11, 3 3, 4 4, 5 5}
+         (df/memo-reduce +
+                         df/current
+                         (df/dfc {1 [2 3] 2 [4 5]} 1))))
+  (is (= {1 5, 2 -2, 3 6}
+         (df/memo-reduce {2 -2, 3 6}
+                         +
+                         df/current
+                         (df/dfc {1 [2 3] 2 [4 5]} 1)))))
+(deftest memo-reduce-shortcircuit-children
+  (let [nox (->> (df/dfc {:a [:b :c :d] :b [:x :y] :c [:q] :d [:x]} :a)
+                 (df/never #(= :x (df/current %))))]
+    (is (thrown? AssertionError (df/down (df/down nox))))
+    (is (thrown? AssertionError
+                 (df/memo-reduce conj
+                                 (fn [x] [(df/current x)])
+                                 nox)))
+    (is (= {:a [:a [:b] [:c [:q]] [:no]]
+            :b [:b]
+            :c [:c [:q]]
+            :d [:no]
+            :q [:q]}
+           (df/memo-reduce {:d [:no]}
+                           conj
+                           (fn [x]
+                               (let [curr (df/current x)]
+                                 (if (= :b curr)
+                                   (reduced [curr])
+                                   [curr])))
+                           nox)))))
+(deftest memo-reduce-shortcircuit-siblings
+  (let [nox (->> (df/dfc {:a [:b :c :x] :b [:p] :c [:m :n] :x [:q :r]} :a)
+                 (df/never #(= :x (df/current %))))]
+    (is (thrown? AssertionError
+                 (->> (df/down nox)
+                      (df/scan df/across (constantly false)))))
+    (is (thrown? AssertionError
+                 (df/memo-reduce conj
+                                 (fn [x] [(df/current x)])
+                                 nox)))
+    (is (= {:a [:a [:no] [:c [:m] [:n]]]
+            :b [:no]
+            :c [:c [:m] [:n]]
+            :m [:m]
+            :n [:n]}
+           (df/memo-reduce {:b [:no]}
+                           (fn [L x]
+                             (let [newL (conj L x)]
+                               (if (= :c (first x))
+                                 (reduced newL)
+                                 newL)))
+                           (fn [x] [(df/current x)])
+                           nox)))))
+
 (deftest doeach
   (let [x (atom [])]
     (test-traverse

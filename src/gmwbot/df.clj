@@ -356,3 +356,31 @@
                      (up cursor))
               (recur (conj (pop stack) val)
                      (step cursor)))))))))
+
+(defn memo-reduce
+  ([f initf cursor]
+    (memo-reduce {} f initf cursor))
+  ([memo f initf cursor]
+    (loop [memo memo
+           cursor (->> (reroot cursor)
+                       (never loop?)
+                       (stepper))]
+      (let [node (current cursor)]
+        (if (inbound? cursor)
+          (if (contains? memo node)
+            (recur memo (step-over cursor))
+            (let [init (initf cursor)]
+              (if (reduced? init)
+                (recur (assoc memo node @init)
+                       (step-over cursor))
+                (recur (assoc memo node init)
+                       (step cursor)))))
+          (if-let [parent (up cursor)]
+            (let [parent-node (current parent)
+                  val (f (get memo parent-node) (get memo node))]
+              (if (reduced? val)
+                (recur (assoc memo parent-node @val)
+                       (up cursor))
+                (recur (assoc memo parent-node val)
+                       (step cursor))))
+            memo))))))
