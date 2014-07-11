@@ -156,6 +156,40 @@
          (df/reduce conj
                     (fn [x] [(df/current x)])
                     (df/dfs {:a [:b :c] :b [:x :y]} :a)))))
+(deftest dfreduce-shortcircuit-children
+  (let [nox (->> (df/dfs {:a [:b :c] :b [:x :y] :c [:q]} :a)
+                 (df/never #(= :x (df/current %))))]
+    (is (thrown? AssertionError (df/down (df/down nox))))
+    (is (thrown? AssertionError
+                 (df/reduce conj
+                            (fn [x] [(df/current x)])
+                            nox)))
+    (is (= [:a [:b] [:c [:q]]]
+           (df/reduce conj
+                      (fn [x]
+                          (let [curr (df/current x)]
+                            (if (= :b curr)
+                              (reduced [curr])
+                              [curr])))
+                      nox)))))
+(deftest dfreduce-shortcircuit-siblings
+  (let [nox (->> (df/dfs {:a [:b :c :x] :b [:p] :x [:q :r]} :a)
+                 (df/never #(= :x (df/current %))))]
+    (is (thrown? AssertionError
+                 (->> (df/down nox)
+                      (df/scan df/across (constantly false)))))
+    (is (thrown? AssertionError
+                 (df/reduce conj
+                            (fn [x] [(df/current x)])
+                            nox)))
+    (is (= [:a [:b [:p]] [:c]]
+           (df/reduce (fn [L x]
+                          (let [newL (conj L x)]
+                            (if (= :c (first x))
+                              (reduced newL)
+                              newL)))
+                      (fn [x] [(df/current x)])
+                      nox)))))
 
 (deftest never-down
   (let [verge (->> (df/dfs {:a [:b :c] :b [:x :y]} :a)

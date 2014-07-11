@@ -147,6 +147,8 @@
   (if (inbound? stepdfs)
     (or (down stepdfs) (stepper-move stepdfs identity false))
     (or (across stepdfs) (up stepdfs))))
+(defn step-over [stepdfs]
+  (stepper-move stepdfs identity false))
 
 (defn preorder-tree [search]
   "Returns a lazy seq of nodes as by a preorder traversal of search.
@@ -186,12 +188,19 @@
                      (never loop?)
                      (stepper))]
     (if (inbound? search)
-      (recur (conj stack (initf search))
-             (step search))
+      (let [init (initf search)]
+        (if (reduced? init)
+          (recur (conj stack @init)
+                 (step-over search))
+          (recur (conj stack init)
+                 (step search))))
       (let [top (peek stack)
             stack (pop stack)]
         (if (empty? stack)
           top
-          (recur (conj (pop stack)
-                       (f (peek stack) top))
-                 (step search)))))))
+          (let [val (f (peek stack) top)]
+            (if (reduced? val)
+              (recur (conj (pop stack) @val)
+                     (up search))
+              (recur (conj (pop stack) val)
+                     (step search)))))))))
