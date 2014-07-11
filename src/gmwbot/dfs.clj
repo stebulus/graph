@@ -3,11 +3,45 @@
   (:require [clojure.core :as core]))
 
 (defprotocol DepthFirstSearch
-  (down [this])
-  (across [this])
-  (up [this])
-  (current [this])
-  (reroot [this]))
+  "A cursor for a depth-first traversal of a directed graph.  These
+  cursors are immutable; navigation functions return a new cursor,
+  and the old cursor remains valid.  A cursor is only guaranteed
+  to be able to reach nodes which would be visited after it in a
+  depth-first traversal.  For example, consider the graph
+        A -> B C D
+        B -> X Y
+  (that is, a graph with nodes A, B, C, D, X, Y, with arcs from A to B,
+  to C, and to D, and arcs from B to X and to Y).  If we start with
+  a cursor at A, move down to B, then across to C, the resulting
+  cursor at C is not guaranteed to be able to access B, X, or Y.
+  (We might try to move up to A and then back down; the move up to A
+  will succeed, because A would normally be visited again after its
+  children had been traversed, but the move down from A again might
+  fail.)  Note that, consequently, if we retain only a reference to
+  the cursor at C, the nodes B, X, and Y could be garbage-collected."
+  (down [this]
+    "Returns a cursor at the first (leftmost) child of the current node,
+    or nil if the current node has no children.")
+  (across [this]
+    "Returns a cursor at the next (to the right) sibling of the
+    current node, or nil if this node has no further siblings.
+    The resulting cursor may not be able to access the current node
+    or any previous siblings.")
+  (up [this]
+    "Returns a cursor at the parent of this node, or nil if this node
+    has no parent.  The resulting cursor may not be able to access
+    the current node or any of its siblings.")
+  (current [this]
+    "The current node.")
+  (reroot [this]
+    "Returns a cursor at the current node, but which cannot move up.
+    Any state associated with the path by which this cursor reached
+    the current node is omitted from the new cursor.  A caller can use
+    this function to declare that it has no further interest in the
+    ancestors of the current node (and so, for example, they could
+    be garbage-collected).  For least surprise, the cursor obtained
+    by reroot should usually be the same as a newly constructed one
+    at the same location."))
 
 (declare dfs)
 (defrecord StackDFS [children stack]
