@@ -147,9 +147,16 @@
 (defn- seen-move [move seen cursor]
   (some->> (move cursor)
            (SeenDFC. (conj seen (current cursor)))))
-(defn record-seen [cursor]
+(defn record-seen
+  "A cursor wrapper which remembers all nodes seen.  To find out
+  if the current node has been seen before, use (seen? cursor).
+  Rerooting this cursor yields a cursor which has seen nothing."
+  [cursor]
   (SeenDFC. #{} cursor))
-(defn seen? [seenc]
+(defn seen?
+  "Whether the current node of the cursor seenc has been seen before.
+  The cursor must be of the type returned by record-seen."
+  [seenc]
   (contains? (.seen seenc) (current seenc)))
 
 (declare prune)
