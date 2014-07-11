@@ -72,27 +72,8 @@
 (defn doeach [f search]
   (doeach-move identity f search))
 
-(declare never-move never)
-(defrecord NeverDFS [pred search]
-  Wrapper
-  (unwrap [this] search)
-  DepthFirstSearch
-  (down [this]
-    (never-move down pred search))
-  (across [this]
-    (never-move across pred search))
-  (up [this]
-    (never-move up pred search))
-  (current [this]
-    (current search))
-  (reroot [this]
-    (never pred (reroot search))))
-(defn- never-move [move pred search]
-  (when-some [s (move search)]
-    (assert (not (pred s)))
-    (NeverDFS. pred s)))
 (defn never [pred search]
-  (never-move identity pred search))
+  (doeach #(assert (not (pred %))) search))
 
 (declare seen-move record-seen)
 (defrecord SeenDFS [seen search]
