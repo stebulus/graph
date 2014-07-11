@@ -118,7 +118,10 @@
   (when-let [s (move cursor)]
     (f s)
     (DoEachDFC. f s)))
-(defn doeach [f cursor]
+(defn doeach
+  "A cursor wrapper which evaluates (f cursor) at every node and
+  discards the result."
+  [f cursor]
   (doeach-move identity f cursor))
 
 (defmacro never [pred cursor]
