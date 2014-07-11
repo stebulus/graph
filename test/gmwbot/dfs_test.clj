@@ -191,6 +191,21 @@
                       (fn [x] [(df/current x)])
                       nox)))))
 
+(deftest doeach
+  (let [x (atom [])]
+    (test-traverse
+      (df/doeach
+        #(swap! x conj (df/current %))
+        (df/dfs {:a [:b :c] :b [:x :y]} :a))
+      (fn [s] @x)
+      [:a]
+      (df/down)
+      [:a :b]
+      (df/across)
+      [:a :b :c]
+      (df/up)
+      [:a :b :c :a])))
+
 (deftest never-down
   (let [verge (->> (df/dfs {:a [:b :c] :b [:x :y]} :a)
                    (df/never #(= :b (df/current %))))]

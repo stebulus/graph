@@ -50,6 +50,28 @@
 (defprotocol Wrapper
   (unwrap [this]))
 
+(declare doeach-move)
+(defrecord DoEachDFS [f search]
+  Wrapper
+  (unwrap [this] search)
+  DepthFirstSearch
+  (down [this]
+    (doeach-move down f search))
+  (across [this]
+    (doeach-move across f search))
+  (up [this]
+    (doeach-move up f search))
+  (current [this]
+    (current search))
+  (reroot [this]
+    (doeach-move reroot f search)))
+(defn- doeach-move [move f search]
+  (when-let [s (move search)]
+    (f s)
+    (DoEachDFS. f s)))
+(defn doeach [f search]
+  (doeach-move identity f search))
+
 (declare never-move never)
 (defrecord NeverDFS [pred search]
   Wrapper
