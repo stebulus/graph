@@ -340,19 +340,17 @@
 (defn reduce
   "Reduce the subtree under the current node of cursor.  The result
   is pretty much the same as
-      (clojure.core/reduce f (initf cursor) child-vals)
+      (clojure.core/reduce f (initf (current cursor)) child-vals)
   where child-vals is a lazy sequence of the values of the children of
   the current node, which are computed in the same way.  For example,
-      (gmwbot.df/reduce + current (dfc {1 [2 3] 2 [4 5]} 1))
+      (gmwbot.df/reduce + identity (dfc {1 [2 3] 2 [4 5]} 1))
   computes 15 as if by
       (+ (+ 1 (+ (+ 2 4) 5)) 3)
   (Since + is associative, this example would be more efficiently
   computed with
       (clojure.core/reduce + (preorder ...))
   because this version doesn't need to maintain its own stack.)
-  Note that initf is called with the cursor as argument, not the
-  node; thus it can take the neighbourhood of the current node
-  into account.  Unlike with clojure.core/reduce, the initial value
+  Unlike with clojure.core/reduce, the initial value
   (function) may not be omitted.  The combining function f is only
   ever called with two arguments; if a node has no children, its
   initial value from initf will be used and f will not be called.
@@ -377,7 +375,7 @@
                      (never loop?)
                      (stepper))]
     (if (inbound? cursor)
-      (let [init (initf cursor)]
+      (let [init (initf (current cursor))]
         (if (reduced? init)
           (recur (conj stack @init)
                  (step-over cursor))
@@ -406,7 +404,7 @@
         (if (inbound? cursor)
           (if (contains? memo node)
             (recur memo (step-over cursor))
-            (let [init (initf cursor)]
+            (let [init (initf (current cursor))]
               (if (reduced? init)
                 (recur (assoc memo node @init)
                        (step-over cursor))

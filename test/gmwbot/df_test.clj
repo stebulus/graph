@@ -183,7 +183,7 @@
 (deftest dfreduce
   (is (= [:a [:b [:x] [:y]] [:c]]
          (df/reduce conj
-                    (fn [x] [(df/current x)])
+                    (fn [x] [x])
                     (df/dfc {:a [:b :c] :b [:x :y]} :a)))))
 (deftest dfreduce-shortcircuit-children
   (let [nox (->> (df/dfc {:a [:b :c] :b [:x :y] :c [:q]} :a)
@@ -191,15 +191,14 @@
     (is (thrown? AssertionError (df/down (df/down nox))))
     (is (thrown? AssertionError
                  (df/reduce conj
-                            (fn [x] [(df/current x)])
+                            (fn [x] [x])
                             nox)))
     (is (= [:a [:b] [:c [:q]]]
            (df/reduce conj
                       (fn [x]
-                          (let [curr (df/current x)]
-                            (if (= :b curr)
-                              (reduced [curr])
-                              [curr])))
+                          (if (= :b x)
+                            (reduced [x])
+                            [x]))
                       nox)))))
 (deftest dfreduce-shortcircuit-siblings
   (let [nox (->> (df/dfc {:a [:b :c :x] :b [:p] :x [:q :r]} :a)
@@ -209,7 +208,7 @@
                       (df/scan df/across (constantly false)))))
     (is (thrown? AssertionError
                  (df/reduce conj
-                            (fn [x] [(df/current x)])
+                            (fn [x] [x])
                             nox)))
     (is (= [:a [:b [:p]] [:c]]
            (df/reduce (fn [L x]
@@ -217,20 +216,19 @@
                             (if (= :c (first x))
                               (reduced newL)
                               newL)))
-                      (fn [x] [(df/current x)])
+                      (fn [x] [x])
                       nox)))))
 (deftest dfreduce-loop
   (is (thrown? AssertionError
                (df/reduce +
-                          df/current
+                          identity
                           (df/dfc {1 [2 3] 2 [4 5] 3 [4 1]} 1))))
   (is (= (+ 1 2 3 4 5)
          (df/reduce +
-                    (fn [cursor]
-                        (let [curr (df/current cursor)]
-                          (if (= 3 curr)
-                            (reduced curr)
-                            curr)))
+                    (fn [curr]
+                        (if (= 3 curr)
+                          (reduced curr)
+                          curr))
                     (df/dfc {1 [2 3] 2 [4 5] 3 [4 1]} 1))))
   (is (= (+ 1 2 3 4 5 7)
          (df/reduce (fn [x y]
@@ -238,36 +236,35 @@
                           (if (= 7 y)
                             (reduced val)
                             val)))
-                    df/current
+                    identity
                     (df/dfc {1 [2 3] 2 [4 5] 3 [7 1]} 1)))))
 (deftest super-reduce
   ; A technique for short-circuiting the entire rest of the tree.
   (let [cursor (->> (df/dfc {2 [4 3] 4 [6 8 5 7] 8 [10 12 1] 12 [9]} 2)
                     (df/never #(odd? (df/current %)) "odd"))]
     (is (thrown? AssertionError (df/reduce +
-                                           df/current
+                                           identity
                                            cursor)))
     (is (= (+ 2 4 6 8 10 12)
            @(df/reduce (fn [x y]
                            (if (reduced? y)
                              (reduced (reduced (+ x @y)))
                              (+ x y)))
-                       (fn [cursor]
-                           (let [val (df/current cursor)]
-                             (if (= val 12)
-                               (reduced (reduced val))
-                               val)))
+                       (fn [curr]
+                           (if (= curr 12)
+                             (reduced (reduced curr))
+                             curr))
                        cursor)))))
 
 (deftest memo-reduce
   (is (= {1 15, 2 11, 3 3, 4 4, 5 5}
          (df/memo-reduce +
-                         df/current
+                         identity
                          (df/dfc {1 [2 3] 2 [4 5]} 1))))
   (is (= {1 5, 2 -2, 3 6}
          (df/memo-reduce {2 -2, 3 6}
                          +
-                         df/current
+                         identity
                          (df/dfc {1 [2 3] 2 [4 5]} 1)))))
 (deftest memo-reduce-shortcircuit-children
   (let [nox (->> (df/dfc {:a [:b :c :d] :b [:x :y] :c [:q] :d [:x]} :a)
@@ -275,7 +272,7 @@
     (is (thrown? AssertionError (df/down (df/down nox))))
     (is (thrown? AssertionError
                  (df/memo-reduce conj
-                                 (fn [x] [(df/current x)])
+                                 (fn [x] [x])
                                  nox)))
     (is (= {:a [:a [:b] [:c [:q]] [:no]]
             :b [:b]
@@ -285,10 +282,9 @@
            (df/memo-reduce {:d [:no]}
                            conj
                            (fn [x]
-                               (let [curr (df/current x)]
-                                 (if (= :b curr)
-                                   (reduced [curr])
-                                   [curr])))
+                               (if (= :b x)
+                                 (reduced [x])
+                                 [x]))
                            nox)))))
 (deftest memo-reduce-shortcircuit-siblings
   (let [nox (->> (df/dfc {:a [:b :c :x] :b [:p] :c [:m :n] :x [:q :r]} :a)
@@ -298,7 +294,7 @@
                       (df/scan df/across (constantly false)))))
     (is (thrown? AssertionError
                  (df/memo-reduce conj
-                                 (fn [x] [(df/current x)])
+                                 (fn [x] [x])
                                  nox)))
     (is (= {:a [:a [:no] [:c [:m] [:n]]]
             :b [:no]
@@ -311,7 +307,7 @@
                                (if (= :c (first x))
                                  (reduced newL)
                                  newL)))
-                           (fn [x] [(df/current x)])
+                           (fn [x] [x])
                            nox)))))
 
 (deftest doeach
