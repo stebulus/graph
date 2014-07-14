@@ -205,6 +205,13 @@
   [cursor]
   (prune seen? (record-seen cursor)))
 
+(defprotocol Directed
+  (inbound? [this]
+    "Whether the current direction of the cursor is inbound.  See stepper.")
+  (step-over [this]
+    "Skip the descendants of the current node of the given stepping
+    cursor, thus becoming outbound on the current node.  See stepper."))
+
 (declare stepper-move stepper)
 (defrecord StepperDFC [cursor inbound]
   Wrapper
@@ -219,7 +226,12 @@
   (current [this]
     (current cursor))
   (reroot [this]
-    (stepper (reroot cursor))))
+    (stepper (reroot cursor)))
+  Directed
+  (inbound? [this]
+    (.inbound this))
+  (step-over [this]
+    (stepper-move identity false cursor)))
 (defn- stepper-move [move inbound cursor]
   (when-let [s (move cursor)]
     (StepperDFC. s inbound)))
@@ -249,15 +261,6 @@
   Rerooting this cursor yields an inbound cursor."
   [cursor]
   (StepperDFC. cursor true))
-(defn inbound?
-  "Whether the current direction of the cursor is inbound.  See stepper."
-  [stepc]
-  (.inbound stepc))
-(defn step-over
-  "Skip the descendants of the current node of the given stepping
-  cursor, thus becoming outbound on the current node.  See stepper."
-  [stepc]
-  (stepper-move unwrap false stepc))
 (defn step
   "Advance the stepping cursor.  See stepper."
   [stepc]
