@@ -336,6 +336,11 @@
                    cursor))))
 (defn reductions [inf outf init cursor]
   (ReducerDFC. inf outf (inf init (current cursor)) (stepper cursor)))
+(defn- update-reducer-state [f reducer]
+  (ReducerDFC. (.inf reducer)
+               (.outf reducer)
+               (f (.state reducer))
+               (unwrap reducer)))
 
 (defn reduce
   "Reduce the subtree under the current node of cursor.  The result
@@ -370,27 +375,26 @@
   ; but it'd be a bit tricky to wrangle the cursors correctly.
   ; The following implementation only ever handles one cursor at a
   ; time, and simply advances it from node to node as usual.
-  (loop [stack []
-         cursor (->> (reroot cursor)
-                     (never loop?)
-                     (stepper))]
-    (if (inbound? cursor)
-      (let [init (initf (current cursor))]
-        (if (reduced? init)
-          (recur (conj stack @init)
-                 (step-over cursor))
-          (recur (conj stack init)
-                 (step cursor))))
-      (let [top (peek stack)
-            stack (pop stack)]
-        (if (empty? stack)
-          top
-          (let [val (f (peek stack) top)]
-            (if (reduced? val)
-              (recur (conj (pop stack) @val)
-                     (up cursor))
-              (recur (conj (pop stack) val)
-                     (step cursor)))))))))
+  (->> (reductions (fn [stack node]
+                     (conj stack (initf node)))
+                   (fn [stack node]
+                     (let [popped (pop stack)]
+                       (if (empty? popped)
+                         stack
+                         (conj (pop popped)
+                               (f (peek popped) (peek stack))))))
+                   []
+                   (never loop? (reroot cursor)))
+       (iterate (fn [rc]
+                  (when rc
+                    (if (reduced? (peek (current rc)))
+                      ((if (inbound? rc) step-over up)
+                        (update-reducer-state #(conj (pop %) @(peek %)) rc))
+                      (step rc)))))
+       (take-while some?)
+       (last)
+       (current)
+       (peek)))
 
 (defn memo-reduce
   ([f initf cursor]
