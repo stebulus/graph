@@ -151,6 +151,35 @@
     (df/across)
     [:c true]))
 
+(deftest dfreductions
+  (test-traverse
+    (df/reductions #(conj %1 [:in %2])
+                   #(conj %1 [:out %2])
+                   []
+                   (df/dfc {1 [2 3] 2 [4 5]} 1))
+    df/current
+    [[:in 1]]
+    (df/step)
+    [[:in 1] [:in 2]]
+    (df/step)
+    [[:in 1] [:in 2] [:in 4]]
+    (df/step)
+    [[:in 1] [:in 2] [:in 4] [:out 4]]
+    (df/step)
+    [[:in 1] [:in 2] [:in 4] [:out 4] [:in 5]]
+    (df/step)
+    [[:in 1] [:in 2] [:in 4] [:out 4] [:in 5] [:out 5]]
+    (df/step)
+    [[:in 1] [:in 2] [:in 4] [:out 4] [:in 5] [:out 5] [:out 2]]
+    (df/step)
+    [[:in 1] [:in 2] [:in 4] [:out 4] [:in 5] [:out 5] [:out 2] [:in 3]]
+    (df/step)
+    [[:in 1] [:in 2] [:in 4] [:out 4] [:in 5] [:out 5] [:out 2] [:in 3] [:out 3]]
+    (df/step)
+    [[:in 1] [:in 2] [:in 4] [:out 4] [:in 5] [:out 5] [:out 2] [:in 3] [:out 3] [:out 1]]
+    (df/step)
+    nil))
+
 (deftest dfreduce
   (is (= [:a [:b [:x] [:y]] [:c]]
          (df/reduce conj

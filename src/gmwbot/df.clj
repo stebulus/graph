@@ -1,5 +1,5 @@
 (ns gmwbot.df
-  (:refer-clojure :exclude [reduce])
+  (:refer-clojure :exclude [reduce reductions])
   (:require [clojure.core :as core]))
 
 (defprotocol DepthFirstCursor
@@ -311,6 +311,31 @@
   use (postorder (reroot cursor))."
   [cursor]
   (postorder-tree (prune-seen cursor)))
+
+(declare reducer-move)
+(defrecord ReducerDFC [inf outf state cursor]
+  Wrapper
+  (unwrap [this] cursor)
+  DepthFirstCursor
+  (down [this] (reducer-move down this))
+  (across [this] (reducer-move across this))
+  (up [this] (reducer-move up this))
+  (current [this] state)
+  (reroot [this] (ReducerDFC. inf outf state (reroot cursor)))
+  Directed
+  (inbound? [this] (inbound? cursor))
+  (step-over [this] (reducer-move step-over this)))
+(defn- reducer-move [move reducer]
+  (when-let [cursor (move (unwrap reducer))]
+    (let [inf (.inf reducer) outf (.outf reducer)]
+      (ReducerDFC. inf
+                   outf
+                   ((if (inbound? cursor) inf outf)
+                     (.state reducer)
+                     (current cursor))
+                   cursor))))
+(defn reductions [inf outf init cursor]
+  (ReducerDFC. inf outf (inf init (current cursor)) (stepper cursor)))
 
 (defn reduce
   "Reduce the subtree under the current node of cursor.  The result
