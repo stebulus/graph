@@ -211,6 +211,24 @@
                             val)))
                     df/current
                     (df/dfc {1 [2 3] 2 [4 5] 3 [7 1]} 1)))))
+(deftest super-reduce
+  ; A technique for short-circuiting the entire rest of the tree.
+  (let [cursor (->> (df/dfc {2 [4 3] 4 [6 8 5 7] 8 [10 12 1] 12 [9]} 2)
+                    (df/never #(odd? (df/current %)) "odd"))]
+    (is (thrown? AssertionError (df/reduce +
+                                           df/current
+                                           cursor)))
+    (is (= (+ 2 4 6 8 10 12)
+           @(df/reduce (fn [x y]
+                           (if (reduced? y)
+                             (reduced (reduced (+ x @y)))
+                             (+ x y)))
+                       (fn [cursor]
+                           (let [val (df/current cursor)]
+                             (if (= val 12)
+                               (reduced (reduced val))
+                               val)))
+                       cursor)))))
 
 (deftest memo-reduce
   (is (= {1 15, 2 11, 3 3, 4 4, 5 5}

@@ -333,7 +333,9 @@
   the current node will not be visited, nor their values computed;
   second, if f returns a reduced value, then the following siblings
   of the current node will not be visited, nor their values computed.
-  There is no support for short-circuiting the entire computation.
+  To short-circuit the entirety of the rest of the tree, one technique
+  is to return doubly-reduced values and check for a reduced second
+  argument in f; see gmwbot.df-test/super-reduce for an example.
   If the value of a node is found to depend on itself (because there
   is a loop in the graph being traversed which is not avoided by
   short-circuiting), an AssertionError will be thrown."
