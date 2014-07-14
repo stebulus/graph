@@ -128,10 +128,17 @@
   [f cursor]
   (doeach-move identity f cursor))
 
-(defmacro never
+(defn never
   "A cursor wrapper which asserts (not (pred cursor)) at every node."
-  [pred cursor]
-  `(doeach #(assert (not (~pred %))) ~cursor))
+  ([pred cursor]
+    (never pred nil cursor))
+  ([pred msg cursor]
+    (doeach #(assert (not (pred %))
+                     (apply print-str
+                            (if (some? msg)
+                              (list msg %)
+                              (list %))))
+            cursor)))
 
 (declare seen-move record-seen)
 (defrecord SeenDFC [seen cursor]
