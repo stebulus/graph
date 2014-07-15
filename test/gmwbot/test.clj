@@ -91,24 +91,14 @@
                  :c [[:a]
                      []]}]
     (is (thrown? AssertionError
-                 (first-sets grammar (set (nullables grammar))))))
+                 (first-sets grammar (make-nullable? grammar)))))
   (let [grammar {:s [[:f]
                      ["(" :s "+" :f ")"]
                      []]
                  :f [["a"]]
                  :g [["b"]
-                     []]}
-        nullable? (set (nullables grammar))
-        first-set (first-sets grammar nullable?)]
-    (is (= (first-sets grammar nullable?)
-           {[:single :s] #{"a" "("}
-            [:list [:f]] #{"a"}
-            [:list ["(" :s "+" :f ")"]] #{"("}
-            [:single "("] #{"("}
-            [:list []] #{}
-            [:single :f] #{"a"}
-            [:list ["a"]] #{"a"}
-            [:single "a"] #{"a"}
-            [:single :g] #{"b"}
-            [:list ["b"]] #{"b"}
-            [:single "b"] #{"b"}}))))
+                     []]}]
+    (is (= (first-sets grammar (make-nullable? grammar))
+           {:s #{"a" "("}
+            :f #{"a"}
+            :g #{"b"}}))))

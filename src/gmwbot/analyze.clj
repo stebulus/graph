@@ -101,15 +101,28 @@
         (if (pred x)
           [x]
           (cons x (take-until pred (rest xs))))))))
+(defn make-first-set
+  [productions nullable?]
+  (let [memo (atom {})
+        ensure (fn [memo target]
+                 (df/memo-reduce memo
+                                 union
+                                 (fn [[tag x]]
+                                   (if (and (= tag :single)
+                                            (nil? (productions x)))
+                                     #{x}
+                                     #{}))
+                                 (df/dfc
+                                   (fn [[tag x]]
+                                     (if (= tag :single)
+                                       (map #(list :list %) (productions x))
+                                       (map #(list :single %) (take-until #(not (nullable? %)) x))))
+                                   target)))]
+    (fn [& symbols]
+      (let [k [:list symbols]]
+        (get (swap! memo ensure k) k)))))
 (defn first-sets [productions nullable?]
-  (let [f (recurser (fn [[tag x]]
-                      (if (and (= tag :single)
-                               (nil? (productions x)))
-                        #{x}
-                        #{}))
-                    (fn [[tag x]]
-                        (if (= tag :single)
-                          (map #(list :list %) (productions x))
-                          (map #(list :single %) (take-until #(not (nullable? %)) x))))
-                    (combiner union))]
-    (reduce f {} (map #(list :single %) (keys productions)))))
+  (let [first-set (make-first-set productions nullable?)]
+    (->> (keys productions)
+         (map (juxt identity first-set))
+         (into {}))))
