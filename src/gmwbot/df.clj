@@ -448,7 +448,9 @@
   see gmwbot.df-test/super-reduce for an example.  If the value of a
   node is found to depend on itself (because there is a loop in the
   graph being traversed which is not avoided by short-circuiting),
-  an AssertionError will be thrown."
+  an AssertionError will be thrown.  The value of a node will be
+  recomputed every time it is encountered; to remember and reuse
+  previously computed values, use memo-reduce."
   [f initf cursor]
   ; We could implement this by calling core/reduce as in the docstring,
   ; but it'd be a bit tricky to wrangle the cursors correctly.
@@ -471,6 +473,16 @@
        (peek)))
 
 (defn memo-reduce
+  "Reduce the subtree under the current node of cursor.  Returns a
+  map from node to value, with entries for the initial node of the
+  cursor and all descendants whose values were computed along the way.
+  If a node is encountered more than once (on different branches, not
+  as its own descendant), the value computed on the first encounter
+  will be reused, and its subtree will not be traversed again.
+  Otherwise, the computation is the same as that performed by reduce
+  (q.v.); in particular, f and initf may return reduced values to
+  cause short-circuiting, and if the value of a node is found to
+  depend on itself, an AssertionError will be thrown."
   ([f initf cursor]
     (memo-reduce {} f initf cursor))
   ([memo f initf cursor]
