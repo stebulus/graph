@@ -128,16 +128,22 @@
   [f cursor]
   (doeach-move identity f cursor))
 
-(defn never
-  "A cursor wrapper which asserts (not (pred cursor)) at every node."
+(defn always
+  "A cursor wrapper which asserts (pred cursor) at every node."
   ([pred cursor]
-    (never pred nil cursor))
+    (always pred nil cursor))
   ([pred msg cursor]
-    (doeach #(assert (not (pred %))
+    (doeach #(assert (pred %)
                      (if (some? msg)
                        (print-str msg %)
                        (print-str %)))
             cursor)))
+(defn never
+  "A cursor wrapper which asserts (not (pred cursor)) at every node."
+  ([pred cursor]
+    (always #(not (pred %)) cursor))
+  ([pred msg cursor]
+    (always #(not (pred %)) msg cursor)))
 
 (declare seen-move record-seen)
 (defrecord SeenDFC [seen cursor]
