@@ -312,6 +312,46 @@
   [cursor]
   (postorder-tree (prune-seen cursor)))
 
+(defn prune-children
+  "A cursor wrapper which omits the children of the current node."
+  [cursor]
+  (reify
+    Wrapper
+    (unwrap [this] cursor)
+    DepthFirstCursor
+    (down [this] nil)
+    (across [this] (across cursor))
+    (up [this] (up cursor))
+    (current [this] (current cursor))
+    (reroot [this] (prune-children (reroot cursor)))
+    Directed
+    (inbound? [this] (inbound? cursor))
+    (step-over [this] (step-over cursor))))
+(defn prune-siblings
+  "A cursor wrapper which omits the following siblings of the current node."
+  ([cursor]
+    (prune-siblings 0 cursor))
+  ([depth cursor]
+    (reify
+      Wrapper
+      (unwrap [this] cursor)
+      DepthFirstCursor
+      (down [this] (prune-siblings (inc depth) (down cursor)))
+      (across [this]
+        (if (zero? depth)
+          nil
+          (prune-siblings depth (across cursor))))
+      (up [this]
+        (let [parent (up cursor)]
+          (if (zero? depth)
+            parent
+            (prune-siblings (dec depth) parent))))
+      (current [this] (current cursor))
+      (reroot [this] (reroot cursor))
+      Directed
+      (inbound? [this] (inbound? cursor))
+      (step-over [this] (prune-siblings depth (step-over cursor))))))
+
 (declare reducer-move)
 (defrecord ReducerDFC [inf outf state cursor]
   Wrapper

@@ -151,6 +151,27 @@
     (df/across)
     [:c true]))
 
+(deftest prune-children
+  (let [cursor (df/down (df/dfc {1 [2 3] 2 [4 5]} 1))
+        pruned (df/prune-children cursor)]
+    (is (= 4 (df/current (df/down cursor))))
+    (is (nil? (df/down pruned)))
+    (is (= 3 (df/current (df/across cursor))))
+    (is (= 3 (df/current (df/across pruned))))
+    (is (= 1 (df/current (df/up cursor))))
+    (is (= 1 (df/current (df/up pruned))))))
+(deftest prune-siblings
+  (let [cursor (df/down (df/dfc {1 [2 3] 2 [4 5]} 1))
+        pruned (df/prune-siblings cursor)]
+    (is (= 1 (df/current (df/up cursor))))
+    (is (= 1 (df/current (df/up pruned))))
+    (is (= 3 (df/current (df/across cursor))))
+    (is (nil? (df/across pruned)))
+    (test-traverse cursor df/current
+      2 (df/down) 4 (df/across) 5 (df/up) 2 (df/across) 3)
+    (test-traverse pruned df/current
+      2 (df/down) 4 (df/across) 5 (df/up) 2 (df/across) nil)))
+
 (deftest dfreductions
   (test-traverse
     (df/reductions #(conj %1 [:in %2])
