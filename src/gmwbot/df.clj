@@ -443,26 +443,26 @@
   ([f initf cursor]
     (memo-reduce {} f initf cursor))
   ([memo f initf cursor]
-    (loop [memo memo
-           cursor (->> (reroot cursor)
-                       (never loop?)
-                       (stepper))]
-      (let [node (current cursor)]
-        (if (inbound? cursor)
-          (if (contains? memo node)
-            (recur memo (step-over cursor))
-            (let [init (initf (current cursor))]
-              (if (reduced? init)
-                (recur (assoc memo node @init)
-                       (step-over cursor))
-                (recur (assoc memo node init)
-                       (step cursor)))))
-          (if-let [parent (up cursor)]
-            (let [parent-node (current parent)
-                  val (f (get memo parent-node) (get memo node))]
-              (if (reduced? val)
-                (recur (assoc memo parent-node @val)
-                       (up cursor))
-                (recur (assoc memo parent-node val)
-                       (step cursor))))
-            memo))))))
+    (->> (reductions (fn [[stack memo] node]
+                       (let [newstack (conj stack node)]
+                         (if (contains? memo node)
+                           (reduced [newstack memo])
+                           (let [val (initf node)]
+                             (if (reduced? val)
+                               (reduced [newstack (assoc memo node @val)])
+                               [newstack (assoc memo node val)])))))
+                     (fn [[stack memo] node]
+                       (let [newstack (pop stack)]
+                         (if (empty? newstack)
+                           memo
+                           (let [parent-node (peek newstack)
+                                 val (f (get memo parent-node) (get memo node))]
+                             (if (reduced? val)
+                               (reduced [newstack (assoc memo parent-node @val)])
+                               [newstack (assoc memo parent-node val)])))))
+                     [[] memo]
+                     (never loop? (reroot cursor)))
+         (iterate step)
+         (take-while some?)
+         (last)
+         (current))))
