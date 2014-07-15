@@ -423,21 +423,22 @@
   ; The following implementation only ever handles one cursor at a
   ; time, and simply advances it from node to node as usual.
   (->> (reductions (fn [stack node]
-                     (conj stack (initf node)))
+                     (let [val (initf node)]
+                       (if (reduced? val)
+                         (reduced (conj stack @val))
+                         (conj stack val))))
                    (fn [stack node]
                      (let [popped (pop stack)]
                        (if (empty? popped)
                          stack
-                         (conj (pop popped)
-                               (f (peek popped) (peek stack))))))
+                         (let [val (f (peek popped) (peek stack))
+                               popped2 (pop popped)]
+                           (if (reduced? val)
+                             (reduced (conj popped2 @val))
+                             (conj popped2 val))))))
                    []
                    (never loop? (reroot cursor)))
-       (iterate (fn [rc]
-                  (when rc
-                    (if (reduced? (peek (current rc)))
-                      ((if (inbound? rc) step-over up)
-                        (update-reducer-state #(conj (pop %) @(peek %)) rc))
-                      (step rc)))))
+       (iterate step)
        (take-while some?)
        (last)
        (current)
