@@ -125,7 +125,6 @@
   ([productions]
     (first-sets productions (make-nullable? productions)))
   ([productions nullable?]
-    (let [first-set (make-first-set productions nullable?)]
-      (->> (keys productions)
-           (map (juxt identity first-set))
-           (into {})))))
+    (->> (keys productions)
+         (map (juxt identity (make-first-set productions nullable?)))
+         (into {}))))
