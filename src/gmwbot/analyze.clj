@@ -37,7 +37,6 @@
     (fn [& symbols]
       (let [k [:list symbols]]
         (get (swap! memo ensure k) k)))))
-
 (defn nullables
   "The nullable nonterminal symbols of the given grammar, which is
   a map nonterminal -> list of expansions, where an expansion is a
