@@ -52,6 +52,29 @@
   ([] false)
   ([x y] (if (or x y) (reduced true) false)))
 
+(defn make-nullable?
+  "Returns a function which takes one or more symbols as arguments
+  and returns whether that sequence of symbols is nullable in the
+  given grammar.  The returned function is memoized."
+  [productions]
+  (let [memo (atom {})
+        ensure (fn [memo target]
+                 (df/memo-reduce memo
+                                 (fn [state x]
+                                   (if (= state x)
+                                     state
+                                     (reduced x)))
+                                 (fn [[tag _]] (= :list tag))
+                                 (df/dfc (fn [[tag x]]
+                                           (case tag
+                                             :single (map #(list :list %) (productions x))
+                                             :list (map #(list :single %) x)
+                                             (assert false)))
+                                         target)))]
+    (fn [& symbols]
+      (let [k [:list symbols]]
+        (get (swap! memo ensure k) k)))))
+
 (defn nullables
   "The nullable nonterminal symbols of the given grammar, which is
   a map nonterminal -> list of expansions, where an expansion is a
@@ -68,27 +91,8 @@
   ;; and a right-hand side is nullable if all of its children are.
   ;; (Nonterminal symbols have no children, so they are not nullable;
   ;; empty right-hand sides have no children, so they *are* nullable.)
-  (let [step (fn step [memo symbols]
-               (lazy-seq
-                 (when-first [symbol symbols]
-                   (let [newmemo (df/memo-reduce
-                                   memo
-                                   (fn [state x]
-                                     (if (= state x)
-                                       state
-                                       (reduced x)))
-                                   (fn [[tag _]] (= :list tag))
-                                   (df/dfc (fn [[tag x]]
-                                             (case tag
-                                               :single (map #(list :list %) (productions x))
-                                               :list (map #(list :single %) x)
-                                               (assert false)))
-                                           [:single symbol]))]
-                     (cons (find newmemo [:single symbol])
-                           (step newmemo (rest symbols)))))))]
-    (for [[[tag symbol] nullable?] (step {} (keys productions))
-          :when nullable?]
-      symbol)))
+  (let [nullable? (make-nullable? productions)]
+    (filter nullable? (keys productions))))
 
 (defn- take-until [pred xs]
   (lazy-seq
