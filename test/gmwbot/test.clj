@@ -84,21 +84,19 @@
             :e 4
             :f 2}))))
 (deftest firsts
-  (let [grammar {:a [[:b :c]
-                     []]
-                 :b [["terminal"]
-                     []]
-                 :c [[:a]
-                     []]}]
-    (is (thrown? AssertionError
-                 (first-sets grammar (make-nullable? grammar)))))
-  (let [grammar {:s [[:f]
-                     ["(" :s "+" :f ")"]
-                     []]
-                 :f [["a"]]
-                 :g [["b"]
-                     []]}]
-    (is (= (first-sets grammar (make-nullable? grammar))
-           {:s #{"a" "("}
-            :f #{"a"}
-            :g #{"b"}}))))
+  (is (thrown? AssertionError
+               (first-sets {:a [[:b :c]
+                                []]
+                            :b [["terminal"]
+                                []]
+                            :c [[:a]
+                                []]})))
+  (is (= (first-sets {:s [[:f]
+                          ["(" :s "+" :f ")"]
+                          []]
+                      :f [["a"]]
+                      :g [["b"]
+                          []]})
+         {:s #{"a" "("}
+          :f #{"a"}
+          :g #{"b"}})))

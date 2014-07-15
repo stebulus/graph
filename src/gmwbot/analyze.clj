@@ -121,8 +121,11 @@
     (fn [& symbols]
       (let [k [:list symbols]]
         (get (swap! memo ensure k) k)))))
-(defn first-sets [productions nullable?]
-  (let [first-set (make-first-set productions nullable?)]
-    (->> (keys productions)
-         (map (juxt identity first-set))
-         (into {}))))
+(defn first-sets
+  ([productions]
+    (first-sets productions (make-nullable? productions)))
+  ([productions nullable?]
+    (let [first-set (make-first-set productions nullable?)]
+      (->> (keys productions)
+           (map (juxt identity first-set))
+           (into {})))))
