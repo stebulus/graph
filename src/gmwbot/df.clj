@@ -386,7 +386,35 @@
                      outf
                      combineresult
                      cursor)))))
-(defn reductions [inf outf init cursor]
+(defn reductions
+  "A cursor over a graph with the same structure as the given cursor,
+  whose nodes are states computed by combining the previous state with
+  newly visited nodes of the given cursor.  The initial value of the
+  state is init; when a node is visited inbound, the state becomes
+  the value of (inf state node); when a node is visited outbound,
+  the state becomes the value of (outf state node).  When reductions
+  is called, the state will immediately be updated from init as if
+  visiting the current node inbound.  For example,
+      (->> (reductions inf outf init (dfc {1 [2 3] 2 [4 5]} 1))
+           (iterate step)
+           (take-while some?)
+           (last)
+           (current))
+  will return the same value as
+      (-> init (inf 1) (inf 2) (inf 4) (outf 4) (inf 5)
+          (outf 5) (outf 2) (inf 3) (outf 3) (outf 1))
+  If inf returns a reduced value (see clojure.core/reduced), then
+  the children of the current node will be pruned; if outf returns
+  a reduced value, the following siblings of the current node will
+  be pruned.  (In both cases, the actual new state is the unwrapped
+  value, not the reduced value.)  Note that calling across directly
+  on this cursor when it is inbound on the current node will pass
+  directly to the inbound state of the following sibling, skipping the
+  outbound state of the current node, and so outf will not be called;
+  thus it's usually advisable to traverse this cursor using step.
+  This cursor does not detect loops or treat previously seen nodes
+  in any way different from novel nodes."
+  [inf outf init cursor]
   (reducer-move inf outf init stepper cursor))
 
 (defn- percolate-reduced [x f]
