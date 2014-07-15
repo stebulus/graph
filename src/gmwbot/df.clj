@@ -384,6 +384,10 @@
 (defn reductions [inf outf init cursor]
   (reducer-move inf outf init stepper cursor))
 
+(defn- percolate-reduced [x f]
+  (if (reduced? x)
+    (reduced (f @x))
+    (f x)))
 (defn reduce
   "Reduce the subtree under the current node of cursor.  The result
   is pretty much the same as
@@ -418,19 +422,13 @@
   ; The following implementation only ever handles one cursor at a
   ; time, and simply advances it from node to node as usual.
   (->> (reductions (fn [stack node]
-                     (let [val (initf node)]
-                       (if (reduced? val)
-                         (reduced (conj stack @val))
-                         (conj stack val))))
+                     (percolate-reduced (initf node) #(conj stack %)))
                    (fn [stack node]
                      (let [popped (pop stack)]
                        (if (empty? popped)
                          stack
-                         (let [val (f (peek popped) (peek stack))
-                               popped2 (pop popped)]
-                           (if (reduced? val)
-                             (reduced (conj popped2 @val))
-                             (conj popped2 val))))))
+                         (percolate-reduced (f (peek popped) (peek stack))
+                                            #(conj (pop popped) %)))))
                    []
                    (never loop? (reroot cursor)))
        (iterate step)
@@ -447,19 +445,15 @@
                        (let [newstack (conj stack node)]
                          (if (contains? memo node)
                            (reduced [newstack memo])
-                           (let [val (initf node)]
-                             (if (reduced? val)
-                               (reduced [newstack (assoc memo node @val)])
-                               [newstack (assoc memo node val)])))))
+                           (percolate-reduced (initf node)
+                                              #(list newstack (assoc memo node %))))))
                      (fn [[stack memo] node]
                        (let [newstack (pop stack)]
                          (if (empty? newstack)
                            memo
-                           (let [parent-node (peek newstack)
-                                 val (f (get memo parent-node) (get memo node))]
-                             (if (reduced? val)
-                               (reduced [newstack (assoc memo parent-node @val)])
-                               [newstack (assoc memo parent-node val)])))))
+                           (let [parent-node (peek newstack)]
+                             (percolate-reduced (f (get memo parent-node) (get memo node))
+                                                #(list newstack (assoc memo parent-node %)))))))
                      [[] memo]
                      (never loop? (reroot cursor)))
          (iterate step)
