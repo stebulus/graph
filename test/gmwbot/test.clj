@@ -90,7 +90,7 @@
                      []]
                  :c [[:a]
                      []]}]
-    (is (thrown? IllegalArgumentException
+    (is (thrown? AssertionError
                  (first-sets grammar (set (nullables grammar))))))
   (let [grammar {:s [[:f]
                      ["(" :s "+" :f ")"]

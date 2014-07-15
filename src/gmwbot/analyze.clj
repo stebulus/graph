@@ -1,5 +1,6 @@
 (ns gmwbot.analyze
-  (:use clojure.set))
+  (:use clojure.set)
+  (:require [gmwbot.df :as df]))
 
 ;; LL(1) parsing
 
@@ -56,7 +57,7 @@
   a map nonterminal -> list of expansions, where an expansion is a
   (possibly empty) list of nonterminals and terminals."
   [productions]
-  ;; We use recurser with a virtual graph where the symbols
+  ;; We use df/memo-reduce with a virtual graph where the symbols
   ;; (terminal and nonterminal) of the grammar appear as nodes
   ;; [:single symbol] and the right-hand sides of productions
   ;; appear as nodes [:list symbols].  The children of a symbol
@@ -67,16 +68,27 @@
   ;; and a right-hand side is nullable if all of its children are.
   ;; (Nonterminal symbols have no children, so they are not nullable;
   ;; empty right-hand sides have no children, so they *are* nullable.)
-  (let [f (recurser (fn [[tag _]] (if (= tag :single) any all))
-                    (fn [[tag x]] (if (= tag :single)
-                                    (map #(list :list %) (productions x))
-                                    (map #(list :single %) x)))
-                    (fn [f & args] (apply f args)))]
-    (->> (reduce f {} (map #(list :single %) (keys productions)))
-         seq
-         (filter (fn [[[tag x] v]] (and v (= tag :single))))
-         (map first)
-         (map second))))
+  (let [step (fn step [memo symbols]
+               (lazy-seq
+                 (when-first [symbol symbols]
+                   (let [newmemo (df/memo-reduce
+                                   memo
+                                   (fn [state x]
+                                     (if (= state x)
+                                       state
+                                       (reduced x)))
+                                   (fn [[tag _]] (= :list tag))
+                                   (df/dfc (fn [[tag x]]
+                                             (case tag
+                                               :single (map #(list :list %) (productions x))
+                                               :list (map #(list :single %) x)
+                                               (assert false)))
+                                           [:single symbol]))]
+                     (cons (find newmemo [:single symbol])
+                           (step newmemo (rest symbols)))))))]
+    (for [[[tag symbol] nullable?] (step {} (keys productions))
+          :when nullable?]
+      symbol)))
 
 (defn- take-until [pred xs]
   (lazy-seq
