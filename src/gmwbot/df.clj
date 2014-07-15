@@ -1,6 +1,5 @@
 (ns gmwbot.df
-  (:refer-clojure :exclude [reduce reductions])
-  (:require [clojure.core :as core]))
+  (:refer-clojure :exclude [reduce reductions]))
 
 (defprotocol DepthFirstCursor
   "A cursor for a depth-first traversal of a directed graph.  These
