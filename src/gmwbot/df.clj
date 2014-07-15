@@ -75,8 +75,8 @@
 
 (defn skip
   "Iteratively call move on cursor as long as the cursor satisfies
-  pred.  Returns the first cursor that doesn't satisfy pred, or nil
-  if none is found."
+  pred.  Returns the first cursor that doesn't satisfy pred (possibly
+  the cursor passed as an argument), or nil if none is found."
   [move pred cursor]
   (->> (iterate move cursor)
        (take-while some?)
@@ -84,8 +84,8 @@
        (first)))
 (defn scan
   "Iteratively call move on cursor until the cursor satisfies pred.
-  Returns the first cursor that satisfies pred, or nil if none
-  is found."
+  Returns the first cursor that satisfies pred (possibly the cursor
+  passed as an argument), or nil if none is found."
   [move pred cursor]
   (skip move #(not (pred %)) cursor))
 
