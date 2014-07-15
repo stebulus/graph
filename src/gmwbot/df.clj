@@ -134,10 +134,9 @@
     (never pred nil cursor))
   ([pred msg cursor]
     (doeach #(assert (not (pred %))
-                     (apply print-str
-                            (if (some? msg)
-                              (list msg %)
-                              (list %))))
+                     (if (some? msg)
+                       (print-str msg %)
+                       (print-str %)))
             cursor)))
 
 (declare seen-move record-seen)
