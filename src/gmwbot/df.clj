@@ -357,25 +357,32 @@
   Wrapper
   (unwrap [this] cursor)
   DepthFirstCursor
-  (down [this] (reducer-move down this))
-  (across [this] (reducer-move across this))
-  (up [this] (reducer-move up this))
+  (down [this] (reducer-move inf outf state down cursor))
+  (across [this] (reducer-move inf outf state across cursor))
+  (up [this] (reducer-move inf outf state up cursor))
   (current [this] state)
   (reroot [this] (ReducerDFC. inf outf state (reroot cursor)))
   Directed
   (inbound? [this] (inbound? cursor))
-  (step-over [this] (reducer-move step-over this)))
-(defn- reducer-move [move reducer]
-  (when-let [cursor (move (unwrap reducer))]
-    (let [inf (.inf reducer) outf (.outf reducer)]
-      (ReducerDFC. inf
-                   outf
-                   ((if (inbound? cursor) inf outf)
-                     (.state reducer)
-                     (current cursor))
-                   cursor))))
+  (step-over [this] (reducer-move inf outf state step-over cursor)))
+(defn- reducer-move [inf outf state move cursor]
+  (when-let [cursor (move cursor)]
+    (let [combineresult ((if (inbound? cursor) inf outf)
+                          state
+                          (current cursor))]
+      (if (reduced? combineresult)
+        (ReducerDFC. inf
+                     outf
+                     @combineresult
+                     (if (inbound? cursor)
+                       (prune-children cursor)
+                       (prune-siblings cursor)))
+        (ReducerDFC. inf
+                     outf
+                     combineresult
+                     cursor)))))
 (defn reductions [inf outf init cursor]
-  (ReducerDFC. inf outf (inf init (current cursor)) (stepper cursor)))
+  (reducer-move inf outf init stepper cursor))
 (defn- update-reducer-state [f reducer]
   (ReducerDFC. (.inf reducer)
                (.outf reducer)
