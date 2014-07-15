@@ -434,21 +434,21 @@
   computed with
       (clojure.core/reduce + (preorder ...))
   because this version doesn't need to maintain its own stack.)
-  Unlike with clojure.core/reduce, the initial value
-  (function) may not be omitted.  The combining function f is only
-  ever called with two arguments; if a node has no children, its
-  initial value from initf will be used and f will not be called.
-  Short-circuiting occurs in two ways: first, if initf returns a
-  reduced value (see clojure.core/reduced), then the children of
-  the current node will not be visited, nor their values computed;
-  second, if f returns a reduced value, then the following siblings
-  of the current node will not be visited, nor their values computed.
-  To short-circuit the entirety of the rest of the tree, one technique
-  is to return doubly-reduced values and check for a reduced second
-  argument in f; see gmwbot.df-test/super-reduce for an example.
-  If the value of a node is found to depend on itself (because there
-  is a loop in the graph being traversed which is not avoided by
-  short-circuiting), an AssertionError will be thrown."
+  Unlike with clojure.core/reduce, the initial value (function) may
+  not be omitted.  The combining function f is only ever called with
+  two arguments; if a node has no children, its initial value from
+  initf will be used and f will not be called.  Short-circuiting
+  occurs in two ways: first, if initf returns a reduced value (see
+  clojure.core/reduced), then the children of the current node will
+  not be visited, nor their values computed; second, if f returns
+  a reduced value, then the following siblings of the current node
+  will not be visited, nor their values computed.  To short-circuit
+  the entirety of the rest of the tree, one technique is to return
+  doubly-reduced values and check for a reduced second argument in f;
+  see gmwbot.df-test/super-reduce for an example.  If the value of a
+  node is found to depend on itself (because there is a loop in the
+  graph being traversed which is not avoided by short-circuiting),
+  an AssertionError will be thrown."
   [f initf cursor]
   ; We could implement this by calling core/reduce as in the docstring,
   ; but it'd be a bit tricky to wrangle the cursors correctly.
