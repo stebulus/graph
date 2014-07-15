@@ -1,4 +1,4 @@
-(ns gmwbot.test
+(ns gmwbot.analyze-test
   (:use clojure.test gmwbot.analyze))
 (deftest nullability
   (is (= (nullables {:zero-or-more [[:x :zero-or-more]
