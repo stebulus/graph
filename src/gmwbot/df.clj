@@ -383,11 +383,6 @@
                      cursor)))))
 (defn reductions [inf outf init cursor]
   (reducer-move inf outf init stepper cursor))
-(defn- update-reducer-state [f reducer]
-  (ReducerDFC. (.inf reducer)
-               (.outf reducer)
-               (f (.state reducer))
-               (unwrap reducer)))
 
 (defn reduce
   "Reduce the subtree under the current node of cursor.  The result
