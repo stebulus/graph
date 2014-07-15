@@ -57,6 +57,17 @@
   and returns whether that sequence of symbols is nullable in the
   given grammar.  The returned function is memoized."
   [productions]
+  ;; We use df/memo-reduce with a virtual graph where the symbols
+  ;; (terminal and nonterminal) of the grammar appear as nodes
+  ;; [:single symbol] and the right-hand sides of productions
+  ;; appear as nodes [:list symbols].  The children of a symbol
+  ;; node are the nodes representing its right-hand sides; the
+  ;; children of a right-hand-side node are the nodes representing
+  ;; the symbols in the expansion.  Nullability is then a matter of
+  ;; evaluation: a symbol is nullable if any of its children are,
+  ;; and a right-hand side is nullable if all of its children are.
+  ;; (Nonterminal symbols have no children, so they are not nullable;
+  ;; empty right-hand sides have no children, so they *are* nullable.)
   (let [memo (atom {})
         ensure (fn [memo target]
                  (df/memo-reduce memo
@@ -80,17 +91,6 @@
   a map nonterminal -> list of expansions, where an expansion is a
   (possibly empty) list of nonterminals and terminals."
   [productions]
-  ;; We use df/memo-reduce with a virtual graph where the symbols
-  ;; (terminal and nonterminal) of the grammar appear as nodes
-  ;; [:single symbol] and the right-hand sides of productions
-  ;; appear as nodes [:list symbols].  The children of a symbol
-  ;; node are the nodes representing its right-hand sides; the
-  ;; children of a right-hand-side node are the nodes representing
-  ;; the symbols in the expansion.  Nullability is then a matter of
-  ;; evaluation: a symbol is nullable if any of its children are,
-  ;; and a right-hand side is nullable if all of its children are.
-  ;; (Nonterminal symbols have no children, so they are not nullable;
-  ;; empty right-hand sides have no children, so they *are* nullable.)
   (let [nullable? (make-nullable? productions)]
     (filter nullable? (keys productions))))
 
