@@ -9,23 +9,20 @@
   (let [transpose (apply merge-with
                          concat
                          (for [[k vs] graph v vs] {v [k]}))]
-    (loop [stack (into []
-                       (df/postorder
-                         (df/as-siblings
-                           (map #(df/dfc graph %)
-                                (keys graph)))))
-           vscc {}]
-      (if (empty? stack)
-        vscc
-        (let [v (peek stack)]
-          (if (contains? vscc v)
-            (recur (pop stack) vscc)
-            (let [newscc (->> (df/dfc transpose v)
-                              (df/prune #(vscc (df/current %)))
-                              (df/preorder)
-                              (into #{}))]
-              (recur (pop stack)
-                     (into vscc (for [node newscc] [node newscc]))))))))))
+    (reduce (fn [vscc v]
+              (if (contains? vscc v)
+                vscc
+                (let [newscc (->> (df/dfc transpose v)
+                                  (df/prune #(vscc (df/current %)))
+                                  (df/preorder)
+                                  (into #{}))]
+                  (into vscc
+                        (for [node newscc] [node newscc])))))
+            {}
+            (->> (map #(df/dfc graph %) (keys graph))
+                 (df/as-siblings)
+                 (df/postorder)
+                 (reverse)))))
 (defn scc [graph]
   (into #{} (vals (scc-map graph))))
 
