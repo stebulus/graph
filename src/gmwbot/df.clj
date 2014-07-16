@@ -72,6 +72,32 @@
   [graph start]
   (StackDFC. graph [[start]]))
 
+(defrecord SiblingSeqDFC [cursor depth siblings]
+  DepthFirstCursor
+  (down [this]
+    (when-let [child (down cursor)]
+      (SiblingSeqDFC. child (inc depth) siblings)))
+  (across [this]
+    (if-some [sib (across cursor)]
+      (SiblingSeqDFC. sib depth siblings)
+      (when (zero? depth)
+        (when-first [sib siblings]
+          (SiblingSeqDFC. sib depth (rest siblings))))))
+  (up [this]
+    (if (zero? depth)
+      nil
+      (when-let [parent (up cursor)]
+        (SiblingSeqDFC. parent (dec depth) siblings))))
+  (current [this]
+    (current cursor))
+  (reroot [this]
+    (reroot cursor)))
+(defn as-siblings [cursors]
+  "A cursor over a graph in which the current nodes of the cursors
+  in the given sequence, and their siblings, are siblings."
+  (when-first [cursor cursors]
+    (SiblingSeqDFC. cursor 0 (rest cursors))))
+
 (defn skip
   "Iteratively call move on cursor as long as the cursor satisfies
   pred.  Returns the first cursor that doesn't satisfy pred (possibly

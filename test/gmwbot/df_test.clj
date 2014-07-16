@@ -598,3 +598,25 @@
 (deftest postorder-tree
   (is (= (df/postorder-tree (df/dfc {:a [:b :c] :b [:x :y] :c [:x]} :a))
          [:x :y :b :x :c :a])))
+
+(deftest as-siblings
+  (let [graph {1 [3 5] 2 [4 6]}
+        cursor (df/as-siblings [(df/dfc graph 1) (df/dfc graph 2)])]
+    (test-traverse cursor df/current
+      1 (df/across) 2 (df/across) nil)
+    (test-traverse cursor df/current
+      1 (df/up) nil)
+    (test-traverse cursor df/current
+      1 (df/across) 2 (df/up) nil)
+    (test-traverse cursor df/current
+      1 (df/down) 3 (df/up) 1 (df/across) 2 (df/down) 4 (df/up) 2 (df/across) nil)
+    (is (= [1 3 5 2 4 6] (df/preorder-tree cursor)))
+    (is (= [1 3 5] (df/preorder-tree (df/reroot cursor))))
+    (is (= [2 4 6] (df/preorder-tree (df/reroot (df/across cursor)))))))
+(deftest as-siblings-with-siblings
+  (let [graph {1 [3 5] 3 [7 9] 2 [4 6]}
+        cursor (df/as-siblings [(df/down (df/dfc graph 1))
+                                (df/dfc graph 2)])]
+    (test-traverse cursor df/current
+      3 (df/across) 5 (df/across) 2 (df/across) nil)
+    (is (= [3 7 9 5 2 4 6] (df/preorder-tree cursor)))))
