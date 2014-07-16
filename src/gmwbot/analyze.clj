@@ -10,7 +10,7 @@
   as sets of nodes.  Uses Kosaraju's algorithm."
   [graph]
   (let [transpose (apply merge-with
-                         concat
+                         into
                          (for [[k vs] graph v vs] {v [k]}))]
     (reduce (fn [vscc v]
               (if (contains? vscc v)
