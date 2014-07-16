@@ -18,7 +18,6 @@
            #{#{1} #{2 3 4}}))
     (is (= (scc (merge-with concat four {4 [3]}))
            #{#{1} #{2 3 4}}))))
-
 (deftest nullability
   (is (= (nullables {:zero-or-more [[:x :zero-or-more]
                                     []]})
