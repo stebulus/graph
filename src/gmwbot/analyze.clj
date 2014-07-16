@@ -4,7 +4,7 @@
 
 ;; A few graph algorithms
 
-(defn scc [graph]
+(defn scc-map [graph]
   ;; Kosaraju's algorithm
   (let [transpose (apply merge-with
                          concat
@@ -14,20 +14,20 @@
                          (df/as-siblings
                            (map #(df/dfc graph %)
                                 (keys graph)))))
-           sccs #{}
            vscc {}]
       (if (empty? stack)
-        sccs
+        vscc
         (let [v (peek stack)]
           (if (contains? vscc v)
-            (recur (pop stack) sccs vscc)
+            (recur (pop stack) vscc)
             (let [newscc (->> (df/dfc transpose v)
                               (df/prune #(vscc (df/current %)))
                               (df/preorder)
                               (into #{}))]
               (recur (pop stack)
-                     (conj sccs newscc)
                      (into vscc (for [node newscc] [node newscc]))))))))))
+(defn scc [graph]
+  (into #{} (vals (scc-map graph))))
 
 ;; LL(1) parsing
 
