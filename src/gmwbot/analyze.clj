@@ -4,8 +4,11 @@
 
 ;; A few graph algorithms
 
-(defn scc-map [graph]
-  ;; Kosaraju's algorithm
+(defn scc-map
+  "Returns a map whose keys are the nodes of graph and whose values
+  are the strongly connected components to which those nodes belong,
+  as sets of nodes.  Uses Kosaraju's algorithm."
+  [graph]
   (let [transpose (apply merge-with
                          concat
                          (for [[k vs] graph v vs] {v [k]}))]
@@ -23,7 +26,10 @@
                  (df/as-siblings)
                  (df/postorder)
                  (reverse)))))
-(defn scc [graph]
+(defn scc
+  "Returns a set of the strongly connected components of graph,
+  which are sets of nodes."
+  [graph]
   (into #{} (vals (scc-map graph))))
 
 ;; LL(1) parsing
