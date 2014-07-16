@@ -32,6 +32,34 @@
   [graph]
   (into #{} (vals (scc-map graph))))
 
+(defn vertex-map
+  "Returns a graph which has an edge from (f a) to (f b) whenever
+  the given graph has an edge from a to b.  Duplicate edges are
+  not removed."
+  [f graph]
+  (apply merge-with
+         into
+         (for [[k vs] graph v vs]
+              {(f k) [(f v)]})))
+(defn unique-edges
+  "Returns a graph with the same nodes as the given one, but without
+  duplicate edges."
+  [graph]
+  (into {} (for [[k vs] graph] [k (set vs)])))
+(defn remove-loops
+  "Returns a graph without any edges from a node to itself."
+  [graph]
+  (into {} (for [[k vs] graph] [k (into [] (remove #(= k %) vs))])))
+(defn simplify [graph]
+  (remove-loops (unique-edges graph)))
+(defn condense
+  "Returns a graph whose nodes are the strongly connected components
+  of the given graph (as sets of nodes), with a (single) edge from
+  one component to another when any node in the first component has
+  an edge to any node of the second."
+  [graph]
+  (simplify (vertex-map (scc-map graph) graph)))
+
 ;; LL(1) parsing
 
 (defn make-nullable?
