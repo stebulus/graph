@@ -2,6 +2,33 @@
   (:use clojure.set)
   (:require [gmwbot.df :as df]))
 
+;; A few graph algorithms
+
+(defn scc [graph]
+  ;; Kosaraju's algorithm
+  (let [transpose (apply merge-with
+                         concat
+                         (for [[k vs] graph v vs] {v [k]}))]
+    (loop [stack (into []
+                       (df/postorder
+                         (df/as-siblings
+                           (map #(df/dfc graph %)
+                                (keys graph)))))
+           sccs #{}
+           vscc {}]
+      (if (empty? stack)
+        sccs
+        (let [v (peek stack)]
+          (if (contains? vscc v)
+            (recur (pop stack) sccs vscc)
+            (let [newscc (->> (df/dfc transpose v)
+                              (df/prune #(vscc (df/current %)))
+                              (df/preorder)
+                              (into #{}))]
+              (recur (pop stack)
+                     (conj sccs newscc)
+                     (into vscc (for [node newscc] [node newscc]))))))))))
+
 ;; LL(1) parsing
 
 (defn make-nullable?
