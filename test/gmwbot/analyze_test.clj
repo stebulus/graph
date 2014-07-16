@@ -12,11 +12,11 @@
   (is (= (scc {:top [:left :right] :left [] :right [:top :left]})
          #{#{:top :right} #{:left}}))
   (let [four {1 [2] 2 [3] 3 [4 2]}]
-    (is (= (scc (merge-with concat four {4 [1]}))
+    (is (= (scc (merge-with into four {4 [1]}))
            #{#{1 2 3 4}}))
-    (is (= (scc (merge-with concat four {4 [2]}))
+    (is (= (scc (merge-with into four {4 [2]}))
            #{#{1} #{2 3 4}}))
-    (is (= (scc (merge-with concat four {4 [3]}))
+    (is (= (scc (merge-with into four {4 [3]}))
            #{#{1} #{2 3 4}}))))
 (deftest condensation
   (is (= (condense {:top [:left :right] :left [:top] :right []})
@@ -30,11 +30,11 @@
   (is (= (condense {:top [:left :right] :left [] :right [:top :left]})
          {#{:top :right} [#{:left}]}))
   (let [four {1 [2] 2 [3] 3 [4 2]}]
-    (is (= (condense (merge-with concat four {4 [1]}))
+    (is (= (condense (merge-with into four {4 [1]}))
            {#{1 2 3 4} []}))
-    (is (= (condense (merge-with concat four {4 [2]}))
+    (is (= (condense (merge-with into four {4 [2]}))
            {#{1} [#{2 3 4}] #{2 3 4} []}))
-    (is (= (condense (merge-with concat four {4 [3]}))
+    (is (= (condense (merge-with into four {4 [3]}))
            {#{1} [#{2 3 4}] #{2 3 4} []}))))
 (deftest nullability
   (is (= (nullables {:zero-or-more [[:x :zero-or-more]
