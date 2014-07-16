@@ -1,5 +1,6 @@
 (ns gmwbot.df
-  (:refer-clojure :exclude [reduce reductions]))
+  (:refer-clojure :exclude [map reduce reductions])
+  (:require [clojure.core :as core]))
 
 (defprotocol DepthFirstCursor
   "A cursor for a depth-first traversal of a directed graph.  These
@@ -99,13 +100,14 @@
     (SiblingSeqDFC. cursor 0 (rest cursors))))
 
 (defn skip
-  "Iteratively call move on cursor as long as the cursor satisfies
-  pred.  Returns the first cursor that doesn't satisfy pred (possibly
-  the cursor passed as an argument), or nil if none is found."
+  "Iteratively call move on cursor as long as the node satisfies
+  pred.  Returns a cursor at the first node that doesn't satisfy
+  pred (possibly the cursor passed as an argument), or nil if none
+  is found."
   [move pred cursor]
   (->> (iterate move cursor)
        (take-while some?)
-       (drop-while pred)
+       (drop-while #(pred (current %)))
        (first)))
 (defn scan
   "Iteratively call move on cursor until the cursor satisfies pred.
@@ -121,7 +123,7 @@
     (->> (iterate up cursor)
          (take-while some?)
          (drop 1)
-         (map current)
+         (core/map current)
          (some #(= curr %)))))
 
 (defprotocol Wrapper
@@ -221,19 +223,54 @@
   (reroot [this]
     (prune pred (reroot cursor))))
 (defn prune
-  "A cursor wrapper which omits cursors satisfying pred (and therefore
-  also skips the subtrees under them).  Note that pred takes the
-  cursor as an argument, not the node; thus pred may depend on the
-  current node's neighbourhood.  For example, if pred is
-  #(some->> (down %) (current) (= :x)), then nodes which have :x as
-  their first child will be pruned."
+  "A cursor wrapper which omits nodes satisfying pred (and therefore
+  also skips the subtrees under them)."
   [pred cursor]
   (PrunedDFC. pred cursor))
+
+(declare curcur)
+(defrecord CurcurDFC [cursor]
+  Wrapper
+  (unwrap [this] cursor)
+  DepthFirstCursor
+  (down [this] (some-> (down cursor) (curcur)))
+  (across [this] (some-> (across cursor) (curcur)))
+  (up [this] (some-> (up cursor) (curcur)))
+  (current [this] cursor)
+  (reroot [this] (curcur (reroot cursor))))
+(defn curcur
+  "A cursor wrapper representing a graph with the same structure as
+  the underlying cursor, but whose nodes are the cursors themselves.
+  Useful especially when combined with functions such as prune, skip,
+  scan, and map, which apply functions to the nodes of a given cursor.
+  For example,
+      (->> (curcur cursor)
+           (prune #(some->> (down %) (current) (= :x)))
+           (map current))
+  prunes nodes of cursor which have the node :x as first child."
+  [cursor]
+  (CurcurDFC. cursor))
+
+(declare map)
+(defrecord MapDFC [f cursor]
+  Wrapper
+  (unwrap [this] cursor)
+  DepthFirstCursor
+  (down [this] (some->> (down cursor) (map f)))
+  (across [this] (some->> (across cursor) (map f)))
+  (up [this] (some->> (up cursor) (map f)))
+  (current [this] (f (current cursor)))
+  (reroot [this] (map f (reroot cursor))))
+(defn map
+  "A cursor whose nodes are the values of f applied to the nodes of
+  the underlying cursor."
+  [f cursor]
+  (MapDFC. f cursor))
 
 (defn prune-seen
   "A cursor wrapper which omits nodes already seen."
   [cursor]
-  (prune seen? (record-seen cursor)))
+  (map current (prune seen? (curcur (record-seen cursor)))))
 
 (defprotocol Directed
   (inbound? [this]
@@ -311,7 +348,7 @@
        (iterate step)
        (take-while some?)
        (filter inbound?)
-       (map current)))
+       (core/map current)))
 (defn preorder
   "Returns a lazy seq of nodes as by a preorder traversal of cursor.
   Skips nodes that have appeared before.  The traversal is not
@@ -333,7 +370,7 @@
        (iterate step)
        (take-while some?)
        (filter #(not (inbound? %)))
-       (map current)))
+       (core/map current)))
 (defn postorder
   "Returns a lazy seq of nodes as by a postorder traversal of cursor.
   Skips nodes that have appeared before.  The traversal is not

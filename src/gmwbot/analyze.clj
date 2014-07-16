@@ -16,7 +16,7 @@
               (if (contains? vscc v)
                 vscc
                 (let [newscc (->> (df/dfc transpose v)
-                                  (df/prune #(vscc (df/current %)))
+                                  (df/prune vscc)
                                   (df/preorder)
                                   (into #{}))]
                   (into vscc

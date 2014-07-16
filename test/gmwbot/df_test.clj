@@ -115,11 +115,11 @@
     :a
     (df/down)
     :b
-    (df/scan df/across #(= :b (df/current %)))
+    (df/scan df/across #(= :b %))
     :b
-    (df/scan df/across #(= :d (df/current %)))
+    (df/scan df/across #(= :d %))
     :d
-    (df/scan df/across #(= :f (df/current %)))
+    (df/scan df/across #(= :f %))
     nil))
 (deftest skip-across
   (test-traverse
@@ -128,11 +128,11 @@
     :a
     (df/down)
     :b
-    (df/skip df/across #(= :c (df/current %)))
+    (df/skip df/across #(= :c %))
     :b
-    (df/skip df/across #(= :b (df/current %)))
+    (df/skip df/across #(= :b %))
     :c
-    (df/skip df/across #(not (= :a (df/current %))))
+    (df/skip df/across #(not (= :a %)))
     nil))
 
 (deftest loop?
@@ -502,21 +502,21 @@
   (let [atc (->> (df/dfc {:a [:b :c] :b [:x :y] :c [:x]} :a)
                  (df/record-seen)
                  (df/stepper)
-                 (df/scan df/step #(= :c (df/current %)))
+                 (df/scan df/step #(= :c %))
                  (df/unwrap))]
     (is (df/seen? (df/down atc)))
     (is (not (df/seen? (df/down (df/reroot atc)))))))
 
 (deftest prune-down
   (test-traverse
-    (df/prune #(= :b (df/current %))
+    (df/prune #(= :b %)
               (df/dfc {:a [:b :c] :b [:x :y]} :a))
     df/current
     :a
     (df/down)
     :c)
   (test-traverse
-    (df/prune #(= :b (df/current %))
+    (df/prune #(= :b %)
               (df/dfc {:a [:b :b] :b [:x :y]} :a))
     df/current
     :a
@@ -524,7 +524,7 @@
     nil))
 (deftest prune-across
   (test-traverse
-    (df/prune #(= :c (df/current %))
+    (df/prune #(= :c %)
               (df/dfc {:a [:b :c :d] :c [:x :y]} :a))
     df/current
     :a
@@ -533,7 +533,7 @@
     (df/across)
     :d)
   (test-traverse
-    (df/prune #(= :c (df/current %))
+    (df/prune #(= :c %)
               (df/dfc {:a [:b :c] :c [:x :y]} :a))
     df/current
     :a
@@ -543,7 +543,7 @@
     nil))
 (deftest prune-up
   (test-traverse
-    (df/prune #(= :c (df/current %))
+    (df/prune #(= :c %)
               (-> (df/dfc {:a [:b :c :d] :c [:x :c :y]} :a)
                   (df/down)
                   (df/across)
@@ -556,6 +556,14 @@
     :c
     (df/across)
     :d))
+
+(deftest curcur
+  (is (= [:a :c :y :x :d]
+         (->> (df/dfc {:a [:b :c :d] :b [:x :y] :c [:y :x]} :a)
+              (df/curcur)
+              (df/prune #(some->> (df/down %) (df/current) (= :x)))
+              (df/map df/current)
+              (df/preorder)))))
 
 (deftest stepping
   (test-traverse
