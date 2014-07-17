@@ -146,3 +146,17 @@
       (recur (assoc graph a (conj (get graph a []) b))
              (rest edges)))
     graph))
+(defn follow-deps
+  ([productions]
+    (let [nullable? (make-nullable? productions)]
+      (follow-deps productions
+                   nullable?
+                   (make-first-set productions nullable?))))
+  ([productions nullable? first-set]
+    (into-graph (empty-graph (map first productions))
+                (for [[lhs rhses] productions
+                      rhs rhses
+                      sym (take-until #(not (nullable? %))
+                                      (reverse rhs))
+                      :when (contains? productions sym)]
+                  [sym lhs]))))

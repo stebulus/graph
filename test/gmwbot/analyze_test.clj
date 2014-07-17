@@ -77,3 +77,13 @@
          {:s #{"a" "("}
           :f #{"a"}
           :g #{"b"}})))
+(deftest followdep
+  (is (= {:a [] :b [] :c [:a]}
+         (follow-deps {:a [[:b :c]]
+                       :b [["-"]]
+                       :c [["+"]]})))
+  (is (= {:a [] :b [:a] :c [:a]}
+         (follow-deps {:a [[:b :c]]
+                       :b [["-"]]
+                       :c [["+"]
+                           []]}))))
