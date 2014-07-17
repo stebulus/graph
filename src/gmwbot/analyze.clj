@@ -137,3 +137,6 @@
     (->> (keys productions)
          (map (juxt identity (make-first-set productions nullable?)))
          (into {}))))
+
+(defn- empty-graph [vertices]
+  (zipmap vertices (repeat [])))
