@@ -194,3 +194,48 @@
                          (keys cdeps))
                 v component]
             [v folset]))))
+
+(defn parse-table [productions]
+  (let [nullable? (make-nullable? productions)
+        first-set (make-first-set productions nullable?)
+        follow-set (follow-sets productions nullable? first-set)]
+    (reduce (fn [m [k rhs]]
+              (if-some [existing-revrhs (get-in m k)]
+                (throw (IllegalArgumentException.
+                         (print-str "parse conflict:"
+                                    k "has expansions"
+                                    (reverse existing-revrhs)
+                                    "and" rhs)))
+                (assoc-in m k (reverse rhs))))
+            {}
+            (->> (for [[sym rhses] productions
+                       rhs rhses]
+                   [sym rhs])
+                 (mapcat (fn [[sym rhs]]
+                           (concat
+                             (for [x (apply first-set rhs)]
+                               [[sym x] rhs])
+                             (if (apply nullable? rhs)
+                               (for [x (conj (follow-set sym) nil)]
+                                 [[sym x] rhs])
+                               []))))))))
+(defn consume-token [table token stack]
+  (if (empty? stack)
+    (if (nil? token)
+      nil
+      (throw (IllegalStateException.
+               (print-str "expected EOF, not" token))))
+    (let [sym (peek stack)]
+      (if (contains? table sym)
+        (if-some [revrhs (get-in table [sym token])]
+          (recur table
+                 token
+                 (reduce conj (pop stack) revrhs))
+          (throw (IllegalStateException.
+                   (print-str "unexpected" token
+                              "when expanding" sym))))
+        (if (= sym token)
+          (pop stack)
+          (throw (IllegalStateException.
+                   (print-str "unexpected" token
+                              "when" sym "expected"))))))))
