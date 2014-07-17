@@ -87,3 +87,28 @@
                        :b [["-"]]
                        :c [["+"]
                            []]}))))
+(deftest follows
+  (let [grammar {:exprs [[:expr :exprs]
+                         []]
+                 :expr [["(" :exprs ")"]]}
+        nullable? (make-nullable? grammar)
+        firsts (make-first-set grammar nullable?)]
+    (is (= (follow-sets grammar nullable? firsts)
+           {:exprs #{")"}
+            :expr #{"(" ")"}})))
+  (let [grammar {:sum [[:term :more-terms]]
+                 :more-terms [["+" :sum]
+                              []]
+                 :term [[:factor :more-factors]]
+                 :more-factors [["*" :term]
+                                []]
+                 :factor [[:number]
+                          ["(" :sum ")"]]}
+        nullable? (make-nullable? grammar)
+        firsts (make-first-set grammar nullable?)]
+    (is (= (follow-sets grammar nullable? firsts)
+           {:sum #{")"}
+            :more-terms #{")"}
+            :term #{"+" ")"}
+            :more-factors #{"+" ")"}
+            :factor #{"*" "+" ")"}}))))

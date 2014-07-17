@@ -160,3 +160,37 @@
                                       (reverse rhs))
                       :when (contains? productions sym)]
                   [sym lhs]))))
+(defn- base-follow [rhs nullable? first-set]
+  (let [revrhs (reverse rhs)]
+    (map (fn [a b] [a b])
+         revrhs
+         (reductions (fn [fol sym]
+                       (let [fir (first-set sym)]
+                         (if (nullable? sym)
+                           (union fol fir)
+                           fir)))
+                     #{}
+                     revrhs))))
+(defn follow-sets
+  [productions nullable? first-set]
+  (let [deps (follow-deps productions nullable? first-set)
+        sccm (scc-map deps)
+        cdeps (simplify (vertex-map sccm deps))
+        base (reduce (fn [m [k v]]
+                       (merge-with union m {k v}))
+                     {}
+                     (->> (for [rhses (vals productions) rhs rhses] rhs)
+                          (mapcat #(base-follow % nullable? first-set))
+                          (filter (fn [[k v]] (contains? productions k)))
+                          (map (fn [[k v]] [(sccm k) v]))))]
+    (into {}
+          (for [[component folset]
+                 (reduce #(df/memo-reduce
+                            %1
+                            union
+                            base
+                            (df/dfc cdeps %2))
+                         {}
+                         (keys cdeps))
+                v component]
+            [v folset]))))
