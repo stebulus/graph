@@ -140,3 +140,9 @@
 
 (defn- empty-graph [vertices]
   (zipmap vertices (repeat [])))
+(defn- into-graph [graph edges]
+  (if-some [s (seq edges)]
+    (let [[a b] (first edges)]
+      (recur (assoc graph a (conj (get graph a []) b))
+             (rest edges)))
+    graph))
