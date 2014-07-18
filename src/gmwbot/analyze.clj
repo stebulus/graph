@@ -20,9 +20,9 @@
   are the strongly connected components to which those nodes belong,
   as sets of nodes.  Uses Kosaraju's algorithm."
   [graph]
-  (let [transpose (apply merge-with
-                         into
-                         (for [[k vs] graph v vs] {v [k]}))]
+  (let [transpose (->> (edges graph)
+                       (map reverse)
+                       (into-graph {}))]
     (reduce (fn [vscc v]
               (if (contains? vscc v)
                 vscc
