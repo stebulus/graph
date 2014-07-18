@@ -1,11 +1,13 @@
 (ns gmwbot.graph
-  (:require [gmwbot.df :as df]))
+  (:refer-clojure :exclude [into])
+  (:require [clojure.core :as core]
+            [gmwbot.df :as df]))
 
 ;; A few graph algorithms
 
 (defn empty-graph [vertices]
   (zipmap vertices (repeat [])))
-(defn into-graph [graph edges]
+(defn into [graph edges]
   (if-some [s (seq edges)]
     (let [[a b] (first edges)]
       (recur (assoc graph a (conj (get graph a []) b))
@@ -25,16 +27,16 @@
   [graph]
   (let [transpose (->> (edges graph)
                        (map reverse)
-                       (into-graph {}))]
+                       (into {}))]
     (reduce (fn [vscc v]
               (if (contains? vscc v)
                 vscc
                 (let [newscc (->> (df/dfc transpose v)
                                   (df/prune vscc)
                                   (df/preorder)
-                                  (into #{}))]
-                  (into vscc
-                        (for [node newscc] [node newscc])))))
+                                  (core/into #{}))]
+                  (core/into vscc
+                             (for [node newscc] [node newscc])))))
             {}
             (->> (map #(df/dfc graph %) (keys graph))
                  (df/as-siblings)
@@ -44,29 +46,29 @@
   "Returns a set of the strongly connected components of graph,
   which are sets of nodes."
   [graph]
-  (into #{} (vals (scc-map graph))))
+  (core/into #{} (vals (scc-map graph))))
 
 (defn vertex-map
   "Returns a graph which has an edge from (f a) to (f b) whenever
   the given graph has an edge from a to b.  Duplicate edges are
   not removed."
   [f graph]
-  (let [fm (into {} (for [v (vertices graph)] [v (f v)]))]
+  (let [fm (core/into {} (for [v (vertices graph)] [v (f v)]))]
     (->> (edges graph)
          (map (fn [[a b]] [(fm a) (fm b)]))
-         (into-graph (empty-graph (vals fm))))))
+         (into (empty-graph (vals fm))))))
 (defn unique-edges
   "Returns a graph with the same nodes as the given one, but without
   duplicate edges."
   [graph]
-  (into-graph (empty-graph (vertices-with-duplicates graph))
+  (into (empty-graph (vertices-with-duplicates graph))
               (set (edges graph))))
 (defn remove-loops
   "Returns a graph without any edges from a node to itself."
   [graph]
   (->> (edges graph)
        (filter (fn [[a b]] (not= a b)))
-       (into-graph (empty-graph (vertices-with-duplicates graph)))))
+       (into (empty-graph (vertices-with-duplicates graph)))))
 (defn simplify [graph]
   (remove-loops (unique-edges graph)))
 (defn condense
