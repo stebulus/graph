@@ -3,25 +3,37 @@
   (:require [clojure.core :as core]
             [gmwbot.df :as df]))
 
-(defn empty [vertices]
+(defn empty
+  "Returns a graph with the given vertices and no edges."
+  [vertices]
   (zipmap vertices (repeat [])))
-(defn into [graph edges]
+(defn into
+  "Returns the given graph with the given edges added."
+  [graph edges]
   (if-some [s (seq edges)]
     (let [[a b] (first edges)]
       (recur (assoc graph a (conj (get graph a []) b))
              (rest edges)))
     graph))
-(defn edges [graph]
+(defn edges
+  "Returns a lazy sequence of the edges of the given graph."
+  [graph]
   (for [[k vs] graph v vs] [k v]))
-(defn vertices-with-duplicates [graph]
+(defn vertices-with-duplicates
+  "Returns a lazy sequence of the vertices of the graph, almost
+  certainly with duplicates."
+  [graph]
   (concat (keys graph) (for [[k vs] graph v vs] v)))
-(defn vertices [graph]
+(defn vertices
+  "Returns a set of the vertices of graph."
+  [graph]
   (set (vertices-with-duplicates graph)))
 
 (defn map
-  "Returns a graph which has an edge from (f a) to (f b) whenever
-  the given graph has an edge from a to b.  Duplicate edges are
-  not removed."
+  "Returns a graph whose vertices are the values (f v), where v
+  is a vertex of the given graph, and which has an edge from from
+  (f a) to (f b) whenever the given graph has an edge from a to b.
+  Note that if f is not one-to-one, there may be duplicate edges."
   [f graph]
   (let [fm (core/into {} (for [v (vertices graph)] [v (f v)]))]
     (->> (edges graph)
@@ -40,10 +52,16 @@
   (->> (edges graph)
        (filter (fn [[a b]] (not= a b)))
        (into (empty (vertices-with-duplicates graph)))))
-(defn simplify [graph]
+(defn simplify
+  "Returns a simple version of graph, that is, one without duplicate
+  edges and without edges from a vertex to itself."
+  [graph]
   (remove-loops (unique-edges graph)))
 
-(defn transpose [graph]
+(defn transpose
+  "Returns a graph with the same vertices as graph, but with all
+  edges going the opposite direction."
+  [graph]
   (->> (edges graph)
        (core/map reverse)
        (into (empty (vertices-with-duplicates graph)))))
