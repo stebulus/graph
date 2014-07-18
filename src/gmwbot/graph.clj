@@ -71,22 +71,22 @@
   are the strongly connected components to which those nodes belong,
   as sets of nodes.  Uses Kosaraju's algorithm."
   [graph]
-  (let [t (transpose graph)]
-    (reduce (fn [vscc v]
-              (if (contains? vscc v)
-                vscc
-                (let [newscc (->> (df/dfc t v)
-                                  (df/prune vscc)
-                                  (df/preorder)
-                                  (core/into #{}))]
-                  (core/into vscc
-                             (for [node newscc] [node newscc])))))
-            {}
-            (->> (core/map #(df/dfc graph %)
-                           (vertices-with-duplicates graph))
-                 (df/as-siblings)
-                 (df/postorder)
-                 (reverse)))))
+  (->> (core/map #(df/dfc graph %)
+                 (vertices-with-duplicates graph))
+       (df/as-siblings)
+       (df/postorder)
+       (reverse)
+       (reduce (let [t (transpose graph)]
+                 (fn [vscc v]
+                     (if (contains? vscc v)
+                       vscc
+                       (let [newscc (->> (df/dfc t v)
+                                         (df/prune vscc)
+                                         (df/preorder)
+                                         (core/into #{}))]
+                         (core/into vscc
+                                    (for [node newscc] [node newscc]))))))
+               {})))
 (defn scc
   "Returns a set of the strongly connected components of graph,
   which are sets of nodes."
