@@ -19,6 +19,10 @@
   (concat (keys graph) (for [[k vs] graph v vs] v)))
 (defn vertices [graph]
   (set (vertices-with-duplicates graph)))
+(defn transpose [graph]
+  (->> (edges graph)
+       (map reverse)
+       (into (empty-graph (vertices-with-duplicates graph)))))
 
 (defn scc-map
   "Returns a map whose keys are the nodes of graph and whose values
