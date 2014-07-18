@@ -33,7 +33,7 @@
   "Returns a graph whose vertices are the values (f v), where v
   is a vertex of the given graph, and which has an edge from from
   (f a) to (f b) whenever the given graph has an edge from a to b.
-  Note that if f is not one-to-one, there may be duplicate edges."
+  Note that if f is not one-to-one, duplicate edges may be produced."
   [f graph]
   (let [fm (core/into {} (for [v (vertices graph)] [v (f v)]))]
     (->> (edges graph)
