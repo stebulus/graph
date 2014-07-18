@@ -14,6 +14,10 @@
     graph))
 (defn- edges [graph]
   (for [[k vs] graph v vs] [k v]))
+(defn- vertices-with-duplicates [graph]
+  (concat (keys graph) (for [[k vs] graph v vs] v)))
+(defn- vertices [graph]
+  (set (vertices-with-duplicates graph)))
 
 (defn scc-map
   "Returns a map whose keys are the nodes of graph and whose values
