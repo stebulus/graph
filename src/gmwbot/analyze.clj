@@ -12,6 +12,8 @@
       (recur (assoc graph a (conj (get graph a []) b))
              (rest edges)))
     graph))
+(defn- edges [graph]
+  (for [[k vs] graph v vs] [k v]))
 
 (defn scc-map
   "Returns a map whose keys are the nodes of graph and whose values
