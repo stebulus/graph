@@ -1,11 +1,11 @@
 (ns gmwbot.graph
-  (:refer-clojure :exclude [into])
+  (:refer-clojure :exclude [empty into])
   (:require [clojure.core :as core]
             [gmwbot.df :as df]))
 
 ;; A few graph algorithms
 
-(defn empty-graph [vertices]
+(defn empty [vertices]
   (zipmap vertices (repeat [])))
 (defn into [graph edges]
   (if-some [s (seq edges)]
@@ -22,7 +22,7 @@
 (defn transpose [graph]
   (->> (edges graph)
        (map reverse)
-       (into (empty-graph (vertices-with-duplicates graph)))))
+       (into (empty (vertices-with-duplicates graph)))))
 
 (defn scc-map
   "Returns a map whose keys are the nodes of graph and whose values
@@ -58,19 +58,19 @@
   (let [fm (core/into {} (for [v (vertices graph)] [v (f v)]))]
     (->> (edges graph)
          (map (fn [[a b]] [(fm a) (fm b)]))
-         (into (empty-graph (vals fm))))))
+         (into (empty (vals fm))))))
 (defn unique-edges
   "Returns a graph with the same nodes as the given one, but without
   duplicate edges."
   [graph]
-  (into (empty-graph (vertices-with-duplicates graph))
-              (set (edges graph))))
+  (into (empty (vertices-with-duplicates graph))
+        (set (edges graph))))
 (defn remove-loops
   "Returns a graph without any edges from a node to itself."
   [graph]
   (->> (edges graph)
        (filter (fn [[a b]] (not= a b)))
-       (into (empty-graph (vertices-with-duplicates graph)))))
+       (into (empty (vertices-with-duplicates graph)))))
 (defn simplify [graph]
   (remove-loops (unique-edges graph)))
 (defn condense

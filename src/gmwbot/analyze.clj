@@ -88,7 +88,7 @@
                    nullable?
                    (make-first-set productions nullable?))))
   ([productions nullable? first-set]
-    (graph/into (graph/empty-graph (map first productions))
+    (graph/into (graph/empty (map first productions))
                 (for [[lhs rhses] productions
                       rhs rhses
                       sym (take-until #(not (nullable? %))
