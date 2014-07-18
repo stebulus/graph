@@ -60,7 +60,8 @@
   "Returns a graph with the same nodes as the given one, but without
   duplicate edges."
   [graph]
-  (into {} (for [[k vs] graph] [k (vec (set vs))])))
+  (into-graph (empty-graph (vertices-with-duplicates graph))
+              (set (edges graph))))
 (defn remove-loops
   "Returns a graph without any edges from a node to itself."
   [graph]
