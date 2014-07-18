@@ -4,6 +4,15 @@
 
 ;; A few graph algorithms
 
+(defn- empty-graph [vertices]
+  (zipmap vertices (repeat [])))
+(defn- into-graph [graph edges]
+  (if-some [s (seq edges)]
+    (let [[a b] (first edges)]
+      (recur (assoc graph a (conj (get graph a []) b))
+             (rest edges)))
+    graph))
+
 (defn scc-map
   "Returns a map whose keys are the nodes of graph and whose values
   are the strongly connected components to which those nodes belong,
@@ -138,14 +147,6 @@
          (map (juxt identity (make-first-set productions nullable?)))
          (into {}))))
 
-(defn- empty-graph [vertices]
-  (zipmap vertices (repeat [])))
-(defn- into-graph [graph edges]
-  (if-some [s (seq edges)]
-    (let [[a b] (first edges)]
-      (recur (assoc graph a (conj (get graph a []) b))
-             (rest edges)))
-    graph))
 (defn follow-deps
   ([productions]
     (let [nullable? (make-nullable? productions)]
