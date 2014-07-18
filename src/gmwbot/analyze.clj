@@ -126,7 +126,7 @@
                             base
                             (df/dfc cdeps %2))
                          {}
-                         (keys cdeps))
+                         (graph/vertices-with-duplicates cdeps))
                 v component]
             [v folset]))))
 

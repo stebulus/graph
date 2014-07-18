@@ -82,7 +82,8 @@
                   (core/into vscc
                              (for [node newscc] [node newscc])))))
             {}
-            (->> (core/map #(df/dfc graph %) (keys graph))
+            (->> (core/map #(df/dfc graph %)
+                           (vertices-with-duplicates graph))
                  (df/as-siblings)
                  (df/postorder)
                  (reverse)))))
