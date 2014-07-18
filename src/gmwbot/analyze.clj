@@ -64,7 +64,9 @@
 (defn remove-loops
   "Returns a graph without any edges from a node to itself."
   [graph]
-  (into {} (for [[k vs] graph] [k (into [] (remove #(= k %) vs))])))
+  (->> (edges graph)
+       (filter (fn [[a b]] (not= a b)))
+       (into-graph (empty-graph (vertices-with-duplicates graph)))))
 (defn simplify [graph]
   (remove-loops (unique-edges graph)))
 (defn condense
