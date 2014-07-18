@@ -48,10 +48,9 @@
   the given graph has an edge from a to b.  Duplicate edges are
   not removed."
   [f graph]
-  (apply merge-with
-         into
-         (for [[k vs] graph v vs]
-              {(f k) [(f v)]})))
+  (->> (edges graph)
+       (map (fn [[a b]] [(f a) (f b)]))
+       (into-graph {})))
 (defn unique-edges
   "Returns a graph with the same nodes as the given one, but without
   duplicate edges."
