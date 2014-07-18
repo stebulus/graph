@@ -55,7 +55,7 @@
   "Returns a graph with the same nodes as the given one, but without
   duplicate edges."
   [graph]
-  (into {} (for [[k vs] graph] [k (set vs)])))
+  (into {} (for [[k vs] graph] [k (vec (set vs))])))
 (defn remove-loops
   "Returns a graph without any edges from a node to itself."
   [graph]
