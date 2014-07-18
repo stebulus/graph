@@ -110,7 +110,7 @@
   [productions nullable? first-set]
   (let [deps (follow-deps productions nullable? first-set)
         sccm (graph/scc-map deps)
-        cdeps (graph/simplify (graph/vertex-map sccm deps))
+        cdeps (graph/simplify (graph/map sccm deps))
         base (reduce (fn [m [k v]]
                        (merge-with union m {k v}))
                      {}

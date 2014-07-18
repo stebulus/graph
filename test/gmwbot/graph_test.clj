@@ -3,7 +3,7 @@
   (:require [gmwbot.graph :as graph]))
 (deftest vertex-map
   (is (= {0 [1 1 0] 1 [] 2 []}
-         (graph/vertex-map #(mod % 3) {0 [1 4 3] 2 []}))))
+         (graph/map #(mod % 3) {0 [1 4 3] 2 []}))))
 (deftest transpose
   (let [t (graph/transpose {0 [1 2 3] 1 [3 0] 4 []})]
     (is (= (graph/vertices t) #{0 1 2 3 4}))

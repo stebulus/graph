@@ -1,5 +1,5 @@
 (ns gmwbot.graph
-  (:refer-clojure :exclude [empty into])
+  (:refer-clojure :exclude [empty into map])
   (:require [clojure.core :as core]
             [gmwbot.df :as df]))
 
@@ -21,7 +21,7 @@
   (set (vertices-with-duplicates graph)))
 (defn transpose [graph]
   (->> (edges graph)
-       (map reverse)
+       (core/map reverse)
        (into (empty (vertices-with-duplicates graph)))))
 
 (defn scc-map
@@ -40,7 +40,7 @@
                   (core/into vscc
                              (for [node newscc] [node newscc])))))
             {}
-            (->> (map #(df/dfc graph %) (keys graph))
+            (->> (core/map #(df/dfc graph %) (keys graph))
                  (df/as-siblings)
                  (df/postorder)
                  (reverse)))))
@@ -50,14 +50,14 @@
   [graph]
   (core/into #{} (vals (scc-map graph))))
 
-(defn vertex-map
+(defn map
   "Returns a graph which has an edge from (f a) to (f b) whenever
   the given graph has an edge from a to b.  Duplicate edges are
   not removed."
   [f graph]
   (let [fm (core/into {} (for [v (vertices graph)] [v (f v)]))]
     (->> (edges graph)
-         (map (fn [[a b]] [(fm a) (fm b)]))
+         (core/map (fn [[a b]] [(fm a) (fm b)]))
          (into (empty (vals fm))))))
 (defn unique-edges
   "Returns a graph with the same nodes as the given one, but without
@@ -79,4 +79,4 @@
   one component to another when any node in the first component has
   an edge to any node of the second."
   [graph]
-  (simplify (vertex-map (scc-map graph) graph)))
+  (simplify (map (scc-map graph) graph)))
