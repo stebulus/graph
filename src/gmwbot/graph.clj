@@ -29,13 +29,11 @@
   are the strongly connected components to which those nodes belong,
   as sets of nodes.  Uses Kosaraju's algorithm."
   [graph]
-  (let [transpose (->> (edges graph)
-                       (map reverse)
-                       (into {}))]
+  (let [t (transpose graph)]
     (reduce (fn [vscc v]
               (if (contains? vscc v)
                 vscc
-                (let [newscc (->> (df/dfc transpose v)
+                (let [newscc (->> (df/dfc t v)
                                   (df/prune vscc)
                                   (df/preorder)
                                   (core/into #{}))]
