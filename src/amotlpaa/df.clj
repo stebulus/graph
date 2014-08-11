@@ -1,4 +1,4 @@
-(ns gmwbot.df
+(ns amotlpaa.df
   (:refer-clojure :exclude [map reduce reductions])
   (:require [clojure.core :as core]))
 

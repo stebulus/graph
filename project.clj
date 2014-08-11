@@ -1,3 +1,3 @@
-(defproject app "0.1.0-SNAPSHOT"
-  :description "A bot that plays Guess My Word!"
+(defproject amotlpaa.graph "0.1.0"
+  :description "A library for depth-first search and related graph algorithms."
   :dependencies [[org.clojure/clojure "1.6.0"]])

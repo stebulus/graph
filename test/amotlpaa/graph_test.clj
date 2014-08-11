@@ -1,6 +1,6 @@
-(ns gmwbot.graph-test
+(ns amotlpaa.graph-test
   (:use clojure.test)
-  (:require [gmwbot.graph :as graph]))
+  (:require [amotlpaa.graph :as graph]))
 (deftest vertex-map
   (is (= {0 [1 1 0] 1 [] 2 []}
          (graph/map #(mod % 3) {0 [1 4 3] 2 []}))))

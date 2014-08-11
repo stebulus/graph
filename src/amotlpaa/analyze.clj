@@ -1,7 +1,7 @@
-(ns gmwbot.analyze
+(ns amotlpaa.analyze
   (:use clojure.set)
-  (:require [gmwbot.df :as df]
-            [gmwbot.graph :as graph]))
+  (:require [amotlpaa.df :as df]
+            [amotlpaa.graph :as graph]))
 
 ;; LL(1) parsing
 

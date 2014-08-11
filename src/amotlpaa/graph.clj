@@ -1,7 +1,7 @@
-(ns gmwbot.graph
+(ns amotlpaa.graph
   (:refer-clojure :exclude [empty into map])
   (:require [clojure.core :as core]
-            [gmwbot.df :as df]))
+            [amotlpaa.df :as df]))
 
 (defn empty
   "Returns a graph with the given vertices and no edges."

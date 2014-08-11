@@ -1,6 +1,6 @@
-(ns gmwbot.df-test
+(ns amotlpaa.df-test
   (:use clojure.test)
-  (:require [gmwbot.df :as df]))
+  (:require [amotlpaa.df :as df]))
 
 (defn- test-traverse-clause
   "Helper function for macro test-traverse."
