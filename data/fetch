@@ -1,4 +1,0 @@
-#!/bin/sh
-if [ ! -e wiktionary.xml ]; then
-    wget -O- http://dumps.wikimedia.org/enwiktionary/20140504/enwiktionary-20140504-pages-articles-multistream.xml.bz2 |bunzip2 >wiktionary.xml
-fi
