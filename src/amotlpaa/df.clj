@@ -489,7 +489,7 @@
       (clojure.core/reduce f (initf (current cursor)) child-vals)
   where child-vals is a lazy sequence of the values of the children of
   the current node, which are computed in the same way.  For example,
-      (gmwbot.df/reduce + identity (dfc {1 [2 3] 2 [4 5]} 1))
+      (amotlpaa.df/reduce + identity (dfc {1 [2 3] 2 [4 5]} 1))
   computes 15 as if by
       (+ (+ 1 (+ (+ 2 4) 5)) 3)
   (Since + is associative, this example would be more efficiently
@@ -507,7 +507,7 @@
   will not be visited, nor their values computed.  To short-circuit
   the entirety of the rest of the tree, one technique is to return
   doubly-reduced values and check for a reduced second argument in f;
-  see gmwbot.df-test/super-reduce for an example.  If the value of a
+  see amotlpaa.df-test/super-reduce for an example.  If the value of a
   node is found to depend on itself (because there is a loop in the
   graph being traversed which is not avoided by short-circuiting),
   an AssertionError will be thrown.  The value of a node will be

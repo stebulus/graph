@@ -16,13 +16,13 @@
             (list (concat form (list cursor-sym))))))
 (defmacro test-traverse [dfc f & forms]
   "Test a sequence of maneuvers in a depth-first traversal.  dfc is an
-  implementation of gmwbot.df/DepthFirstCursor; f is a callable taking
+  implementation of amotlpaa.df/DepthFirstCursor; f is a callable taking
   a DepthFirstCursor as an argument.  The remaining forms describe a
   sequence of tests, alternating between the expected value of (f dfc)
   and a form into which dfc will be threaded as the last argument;
   the value of the resulting form will be used as the dfc for the
   subsequent forms.  For example,
-    (require '[gmwbot.df :as df])
+    (require '[amotlpaa.df :as df])
     (test-traverse
       (df/dfc {:a [:b]} :a)
       df/current
